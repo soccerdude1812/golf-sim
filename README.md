@@ -54,8 +54,11 @@ $ python -m pytest -q
 
 - **Ball speed / launch angle / direction**: recovered to <1 mph / <0.5° even
   with image noise and spurious reflections (`tests/test_pipeline_synthetic.py`).
-- **Flight model**: reproduces published driver/iron carry distances to within
-  ~15 yd (`tests/test_flight_model.py`).
+- **Flight model vs REAL data**: validated against 14 Trackman PGA/LPGA Tour
+  average rows (real measured swings). Predicted carry tracks *measured* carry
+  with **~4 yd mean error (~2%)** across the whole bag — and **12 of the 14
+  clubs are out-of-sample** (only Driver and 7-iron were used to tune the
+  model). See `scripts/validate_real_data.py` / `tests/test_real_data_validation.py`.
 - **Tracking feasibility**: the recommended rig passes at every golf speed; a
   1080p60 webcam provably fails (`tests/test_feasibility.py`).
 
