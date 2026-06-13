@@ -13,7 +13,7 @@ venv/
 calibration_data/*.json
 calibration_data/*.npz
 captures/
-*.png
+# *.png (diagram is committed explicitly below)
 *.jpg
 *.mp4
 !docs/**/*.png
