@@ -1,4 +1,10 @@
-# Hardware — bill of materials (≈ $380, two cameras, < $500)
+# Hardware — bill of materials (≈ $370, two cameras, < $500)
+
+> For the **definitive, buy-this shopping list + wiring + step-by-step bring-up**,
+> see [`BUILD.md`](BUILD.md). This page is the rationale behind the part choices.
+> (BUILD.md adds a $5 Raspberry Pi Pico as a deterministic shutter/strobe
+> sequencer — preferred over driving the strobe from the Pi's Linux GPIO.)
+
 
 This is a concrete, buy‑this list for a two‑camera optical launch monitor. It
 is modelled on the proven open‑source

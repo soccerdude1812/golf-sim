@@ -73,7 +73,7 @@ python scripts/feasibility_report.py# the "can the cameras track it?" numbers
 
 ## On the real rig
 
-1. Build the hardware — [`docs/HARDWARE.md`](docs/HARDWARE.md).
+1. Build the hardware — [`docs/BUILD.md`](docs/BUILD.md) (exact shopping list + wiring + bring-up).
 2. Place the two cameras — [`docs/CAMERA_PLACEMENT.md`](docs/CAMERA_PLACEMENT.md).
 3. Calibrate — [`docs/CALIBRATION.md`](docs/CALIBRATION.md):
    `python scripts/calibrate.py <chessboard_dir>`
