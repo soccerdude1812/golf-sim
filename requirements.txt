@@ -1,0 +1,12 @@
+# Core (desktop / CI — everything in the test suite runs with just these)
+numpy>=1.24
+opencv-python-headless>=4.8
+
+# Dev
+pytest>=7.0
+
+# On the Raspberry Pi rig, additionally install (not needed for tests/sim):
+#   picamera2          # Global Shutter camera capture
+#   gpiozero           # IR strobe / trigger GPIO
+# These come from the Raspberry Pi OS apt repos (python3-picamera2,
+# python3-gpiozero) rather than pip; see docs/HARDWARE.md.
