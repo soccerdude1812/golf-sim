@@ -112,7 +112,9 @@ The measurement method, timing budget and error analysis are in
 
 ```
 golfsim/     core library (importable, fully tested)
-scripts/     run_demo, feasibility_report, calibrate, run_live
-tests/       28 tests: geometry, flight model, feasibility, full pipeline
-docs/        HARDWARE, CAMERA_PLACEMENT, THEORY, CALIBRATION, FEASIBILITY
+scripts/     run_demo, feasibility_report, validate_real_data, calibrate, run_live
+pico/        Raspberry Pi Pico firmware (shutter + strobe timing sequencer)
+tests/       45 tests: geometry, flight model, feasibility, full pipeline, real data
+docs/        BUILD, HARDWARE, CAMERA_PLACEMENT, THEORY, CALIBRATION, FEASIBILITY,
+             system_diagram.png
 ```

@@ -52,11 +52,11 @@ ax.text(0.45, -1.25, "CAM A\nface-on / side\n(0.20, -1.25)", fontsize=8, color=C
 ax.add_patch(Wedge((0.20, -1.25), 1.0, 70, 110, color=C_CAM, alpha=0.10))
 ax.annotate("", xy=(0.20, -0.1), xytext=(0.20, -1.18),
             arrowprops=dict(arrowstyle="-|>", color=C_CAM, lw=1.2, alpha=0.7))
-# Camera B behind-high (-1.1,-0.9) projected
-ax.add_patch(Rectangle((-1.17, -0.97), 0.14, 0.14, color=C_CAMB, zorder=5))
-ax.text(-1.1, -1.18, "CAM B  behind-high\n(-1.1, -0.9, z=1.7 m)", fontsize=8,
+# Camera B behind-high (-1.0,-0.6) projected
+ax.add_patch(Rectangle((-1.07, -0.67), 0.14, 0.14, color=C_CAMB, zorder=5))
+ax.text(-1.0, -1.18, "CAM B  behind-high\n(-1.0, -0.6, z=1.85 m)", fontsize=8,
         color=C_CAMB, ha="center")
-ax.annotate("", xy=(0.12, -0.05), xytext=(-1.0, -0.85),
+ax.annotate("", xy=(0.12, -0.05), xytext=(-0.9, -0.55),
             arrowprops=dict(arrowstyle="-|>", color=C_CAMB, lw=1.2, alpha=0.7))
 # IR strobe near cam A
 ax.add_patch(Rectangle((0.30, -1.05), 0.1, 0.1, color=C_STROBE, zorder=5))
@@ -89,9 +89,9 @@ ax2.text(-0.95, 1.55, "club swing arc\n(KEEP-OUT)", color="#cc0000", fontsize=8,
 ax2.add_patch(Rectangle((0.14, 0.22), 0.13, 0.12, color=C_CAM, zorder=5))
 ax2.text(0.33, 0.30, "CAM A  (~0.3 m high, low tripod)", fontsize=8, color=C_CAM, va="center")
 # Camera B high
-ax2.add_patch(Rectangle((-1.16, 1.65), 0.13, 0.12, color=C_CAMB, zorder=5))
-ax2.text(-1.05, 1.88, "CAM B  (~1.7 m high — above the swing)", fontsize=8, color=C_CAMB)
-ax2.annotate("", xy=(0.15, 0.12), xytext=(-1.0, 1.65),
+ax2.add_patch(Rectangle((-1.06, 1.80), 0.13, 0.12, color=C_CAMB, zorder=5))
+ax2.text(-0.95, 2.02, "CAM B  (~1.85 m high — above the swing)", fontsize=8, color=C_CAMB)
+ax2.annotate("", xy=(0.15, 0.12), xytext=(-0.9, 1.80),
              arrowprops=dict(arrowstyle="-|>", color=C_CAMB, lw=1.2, alpha=0.6))
 ax2.annotate("", xy=(0.2, 0.08), xytext=(0.2, 0.22),
              arrowprops=dict(arrowstyle="-|>", color=C_CAM, lw=1.2, alpha=0.6))

@@ -59,14 +59,16 @@ class RigGeometry:
         target_m=(0.20, 0.0, 0.06),
         focal_mm=6.0,
     ))
-    # BEHIND-HIGH (down-the-line-ish) camera: behind the golfer, raised and
-    # offset ~40 deg off the flight line.  A *pure* down-the-line camera fails
-    # (the ball recedes from it and the strobe images merge -- see
-    # docs/CAMERA_PLACEMENT.md); the 40 deg quarter angle keeps the pulses
-    # separated while still framing the swing and resolving push/pull.
+    # BEHIND-HIGH (down-the-line-ish) camera: behind the golfer, mounted HIGH
+    # (~1.85 m, above the top of the backswing -- a camera here at chest height
+    # would be in the path of the club) and offset ~40 deg off the flight line.
+    # A *pure* down-the-line camera fails (the ball recedes from it and the
+    # strobe images merge -- see docs/CAMERA_PLACEMENT.md); the quarter angle
+    # keeps the pulses separated while still framing the swing and resolving
+    # push/pull.  Mount on a tall stand, shelf, or ceiling/wall bracket.
     down_the_line: CameraPlacement = field(default_factory=lambda: CameraPlacement(
         name="BehindHigh",
-        center_m=(-0.75, -0.50, 1.05),
+        center_m=(-1.0, -0.6, 1.85),
         target_m=(0.20, 0.0, 0.06),
         focal_mm=6.0,
     ))

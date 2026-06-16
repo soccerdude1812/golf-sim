@@ -14,34 +14,42 @@ software already expects (`golfsim/config.py`), and the whole thing comes in
 
 ## 1. Shopping list (buy exactly this)
 
+Prices are approximate (USD) and stock/links move — for any Raspberry Pi–branded
+item, any [Raspberry Pi Approved Reseller](https://www.raspberrypi.com/resellers/)
+(PiShop.us, Adafruit, Pimoroni, Micro Center) works if a link is dead.
+
 ### Core compute & cameras
-| # | Item | Qty | ~$ ea | ~$ | Why / notes |
-|---|------|----:|------:|---:|-------------|
-| 1 | **Raspberry Pi 5 (8 GB)** | 1 | 80 | 80 | Has **two** 22-pin CSI ports → drives both cameras, no 2nd Pi needed |
-| 2 | Active Cooler for Pi 5 | 1 | 7 | 7 | sustained vision load |
-| 3 | Official 27 W USB-C PSU | 1 | 12 | 12 | Pi 5 needs the 5 A supply |
-| 4 | microSD 64 GB A2 | 1 | 9 | 9 | OS + capture buffer |
-| 5 | **Raspberry Pi Global Shutter Camera (IMX296)** | **2** | 50 | 100 | the two cameras — global shutter is mandatory |
-| 6 | **Raspberry Pi 6 mm CS-mount lens** | 2 | 25 | 50 | GS camera ships **without** a lens; 6 mm ≈ 45° HFOV matches the code |
-| 7 | Pi 5 camera cable, **22-pin → 15-pin**, 300 mm | 2 | 6 | 13 | Pi 5 port is 22-pin; camera is 15-pin. Adafruit 5819 / equiv. |
+| Item | Qty | ~$ ea | Buy |
+|------|----:|------:|-----|
+| **Raspberry Pi 5 (8 GB)** — dual CSI ports drive both cameras | 1 | 80 | [raspberrypi.com](https://www.raspberrypi.com/products/raspberry-pi-5/) · [PiShop.us](https://www.pishop.us/product/raspberry-pi-5-8gb/) |
+| Active Cooler for Pi 5 | 1 | 7 | [raspberrypi.com](https://www.raspberrypi.com/products/active-cooler/) |
+| Official 27 W USB-C PSU | 1 | 12 | [raspberrypi.com](https://www.raspberrypi.com/products/27w-power-supply/) |
+| microSD 64 GB A2 (SanDisk Extreme) | 1 | 9 | [Amazon](https://www.amazon.com/dp/B09X7BK27V) |
+| **Pi Global Shutter Camera (IMX296)** — global shutter is mandatory | **2** | 50 | [raspberrypi.com](https://www.raspberrypi.com/products/raspberry-pi-global-shutter-camera/) · [PiShop.us](https://www.pishop.us/product/raspberry-pi-global-shutter-camera/) |
+| **6 mm CS-mount lens** — GS camera ships **without** a lens | 2 | 25 | [SparkFun 16762](https://www.sparkfun.com/products/16762) · [Arducam/Amazon](https://www.amazon.com/Arducam-Raspberry-CS-Mount-Adjustable-Aperture/dp/B088GWZPL1) |
+| Camera cable **22-pin → 15-pin, 300 mm** | 2 | 6 | [Adafruit 5819](https://www.adafruit.com/product/5819) |
 
 ### Lighting, timing & trigger (the "strobe brain")
-| # | Item | Qty | ~$ ea | ~$ | Why / notes |
-|---|------|----:|------:|---:|-------------|
-| 8 | **Raspberry Pi Pico** (or Pico H) | 1 | 5 | 5 | deterministic PIO timing for shutter + strobe (Linux GPIO jitters) |
-| 9 | **850 nm IR LED array** (≥ 8 × 1 W, with heatsink) | 1 | 25 | 25 | the strobe light; 850 nm is invisible to the golfer, visible to IMX296 |
-| 10 | 12 V 2 A power supply (for the LED array) | 1 | 9 | 9 | LEDs run off 12 V in series strings |
-| 11 | Logic-level N-MOSFET **IRLZ44N** (+1 spare) | 2 | 1.5 | 3 | switches the LED array from a Pico pin |
-| 12 | Piezo impact sensor **or** electret mic module | 1 | 4 | 4 | starts the capture at the strike |
-| 13 | Resistors/proto/level-shift kit (1.5 kΩ, 1.8 kΩ, 220 Ω, perfboard) | 1 | 8 | 8 | XTR is 1.8 V → needs a divider; gate resistor; LED current limits |
-| 14 | Dupont/JST jumper wires | 1 | 8 | 8 | wiring |
+| Item | Qty | ~$ ea | Buy |
+|------|----:|------:|-----|
+| **Raspberry Pi Pico** — deterministic shutter/strobe timing | 1 | 5 | [raspberrypi.com](https://www.raspberrypi.com/products/raspberry-pi-pico/) |
+| **850 nm 3 W IR LED on star + heatsink** (5-pack) — invisible strobe | 1 | 18 | [LEDGUHON/Amazon](https://www.amazon.com/LEDGUHON-Infrared-Illuminator-Transmitter-845-850nm/dp/B0FQBMLT9N) |
+| 12 V 2 A power supply (for the LEDs) | 1 | 9 | [Amazon](https://www.amazon.com/dp/B07K1KZ7D6) |
+| Logic-level N-MOSFET **IRLZ44N** (10-pack) | 1 | 8 | [Amazon](https://www.amazon.com/dp/B08D6Z109X) |
+| Piezo impact sensor | 1 | 4 | [Adafruit 1740](https://www.adafruit.com/product/1740) |
+| Resistor + breadboard + jumper kit (1.5k/1.8k/220R, etc.) | 1 | 12 | [Elegoo/Amazon](https://www.amazon.com/dp/B01EV6LJ7G) |
 
 ### Mounting
-| # | Item | Qty | ~$ ea | ~$ | Why / notes |
-|---|------|----:|------:|---:|-------------|
-| 15 | Mini tripod or ball-head camera mount | 2 | 12 | 24 | rigid, repeatable aiming (or 3-D print brackets, free) |
+| Item | Qty | ~$ ea | Buy |
+|------|----:|------:|-----|
+| Mini tripod / ball-head mount (one tall enough for the ~1.85 m behind-cam, or wall/ceiling bracket) | 2 | 12 | [UBeesize/Amazon](https://www.amazon.com/dp/B07BZGKWX1) |
 
-**Subtotal ≈ $370.** Leaves ~$130 of the $500 budget.
+### Optional but recommended
+| Item | Qty | ~$ ea | Buy |
+|------|----:|------:|-----|
+| 850 nm band-pass filter — makes the strobe pop in a lit room | 2 | 10 | [Amazon](https://www.amazon.com/s?k=850nm+bandpass+filter) |
+
+**Subtotal ≈ $375** (≈ $395 with filters). Leaves headroom under the $500 budget.
 
 ### Optional but recommended
 - **2× 850 nm band-pass filter** (CS-thread or stick-on, ~$10 ea). Makes the
@@ -66,23 +74,25 @@ keep all 5 strobe images in-frame and separated from 95→183 mph.
 
 ```
 TOP VIEW                                   SIDE VIEW (looking along -Y)
-   +X (target) →                              +Z
-                                               │   ◯ ← ball flight (first ~0.3 m)
-  ●ball ··· launch corridor ···  ║net          │  ◯
-   │            ↑ both cams aim here            │ ◯        ┌─┐ B (behind-high, ~1 m up)
-   │         (0.20, 0, 0.06)                    │◯  ●ball  └─┘
-   │                                            └──────────────── +X
+   +X (target) →                              +Z   ┌─┐ B (behind-high, ~1.85 m up,
+                                               │    └─┘    above the swing)
+  ●ball ··· launch corridor ···  ║net          │  ◯ ← ball flight (first ~0.3 m)
+   │            ↑ both cams aim here            │ ◯
+   │         (0.20, 0, 0.06)                    │◯  ●ball  ┌─┐ A (low, to the side)
+   │                                            └──────────└─┘──── +X
    B  ╲                          A
 behind-high╲                   face-on (side)
-   (-0.75,-0.50,1.05)         (0.20,-1.25,0.28)
+   (-1.0,-0.6,1.85)           (0.20,-1.25,0.28)
 ```
 
 - **Camera A — FACE-ON (side):** centre **(0.20, −1.25, 0.28) m**, aimed at
   **(0.20, 0, 0.06)**. ~1.25 m to the side, 28 cm high, looking horizontally
   across the ball line. This is the primary speed/launch-angle camera.
-- **Camera B — BEHIND-HIGH:** centre **(−0.75, −0.50, 1.05) m**, same aim point.
-  ~0.75 m behind, 0.5 m to the side, ~1 m up, looking down toward the ball.
-  Resolves push/pull and frames the swing.
+- **Camera B — BEHIND-HIGH:** centre **(−1.0, −0.6, 1.85) m**, same aim point.
+  ~1 m behind, 0.6 m to the side, **~1.85 m up — deliberately above the top of
+  the backswing** (a camera at chest height here would be in the club's path).
+  Mount on a tall stand or a wall/ceiling bracket; it resolves push/pull and
+  frames the swing.
 
 Translate to your room: put a tee at the origin, point +X at the net, measure
 the two camera centres with a tape, and aim both at a marker ~20 cm in front of
@@ -176,10 +186,11 @@ python scripts/calibrate.py calib --pattern 9x6 --square 0.025
 python scripts/run_live.py --rig calibration_data/rig.json --trigger sound
 ```
 
-Flash the Pico with the strobe/trigger firmware (a short PIO/MicroPython
-program implementing §4 — pin assignments to match your wiring). You can start
-with `--trigger manual` and a bench LED to confirm the capture+detect path
-before wiring the impact sensor.
+Flash the Pico with the ready-made firmware in **[`pico/strobe_controller.py`](../pico/strobe_controller.py)**
+(see [`pico/README.md`](../pico/README.md) for flashing + the bench self-test).
+Its timing constants already match `StrobeConfig`. You can start with
+`--trigger manual` and the Pico's self-test mode to confirm the capture+detect
+path before wiring the impact sensor.
 
 ---
 

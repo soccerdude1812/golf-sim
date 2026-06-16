@@ -49,18 +49,21 @@ center ≈ (0.20, −1.25, 0.28) m     aim at (0.20, 0.0, 0.06) m
 (1.25 m to the side, 28 cm high, looking horizontally across the corridor.)
 
 ### Camera B — BEHIND‑HIGH (down‑the‑line‑ish), the second stereo view
-Behind the golfer **and raised**, offset to the side so its optical axis sits
-~40° off the flight line. It still frames the swing and resolves **launch
-direction (push/pull)**, while keeping the strobe images separated enough to
-triangulate.
+Behind the golfer and **mounted high — above the top of the backswing**, offset
+to the side so its optical axis sits ~40° off the flight line. The height is a
+safety requirement, not just an optical one: a camera behind the golfer at chest
+height sits exactly where the club travels at the top of the backswing. It still
+frames the swing and resolves **launch direction (push/pull)** while keeping the
+strobe images separated enough to triangulate.
 
 ```
-center ≈ (−0.75, −0.50, 1.05) m    aim at (0.20, 0.0, 0.06) m
+center ≈ (−1.0, −0.6, 1.85) m    aim at (0.20, 0.0, 0.06) m
 ```
-(0.75 m behind, 0.5 m to the side, ~1 m high, looking down toward the ball.)
+(1 m behind, 0.6 m to the side, ~1.85 m high — on a tall stand or wall/ceiling
+bracket — looking down toward the ball.)
 
 These are the defaults in `golfsim/config.py` and are the geometry every test
-runs against. The angle between the two optical axes at the corridor is **63°**
+runs against. The angle between the two optical axes at the corridor is **66°**
 — close to the ideal 90° for well‑conditioned triangulation (the code rejects
 near‑parallel geometry that would amplify pixel noise into 3‑D error).
 
