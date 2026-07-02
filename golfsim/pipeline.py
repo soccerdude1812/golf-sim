@@ -12,7 +12,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from .flight_model import LaunchConditions, simulate
+from .flight_model import FlightResult, LaunchConditions, simulate
 from .geometry import Camera
 from .launch import launch_from_velocity, LaunchParameters
 from .spin import estimate_spin_empirical, SpinEstimate
@@ -26,6 +26,7 @@ class ShotResult:
     track: Track3D
     fit: VelocityFit
     launch: LaunchParameters
+    flight: FlightResult            # the simulated flight behind the stats
 
 
 def process_shot(cam_a: Camera, blobs_a, cam_b: Camera, blobs_b,
@@ -62,10 +63,12 @@ def process_shot(cam_a: Camera, blobs_a, cam_b: Camera, blobs_b,
                 f"{max_reproj_px} px -- check camera sync/calibration")
     fit = fit_launch_velocity(track)
     if fit.velocity0[0] < 0.0:
-        # The ball always flies downrange (+X).  A negative vx means the blob
-        # order was reversed in BOTH cameras (the detector's principal-axis
-        # sign is arbitrary when no reference pixel is given): time-reverse
-        # the track and refit.
+        # The ball always flies downrange with vx of tens of m/s -- far
+        # beyond triangulation noise -- so a negative vx can only mean the
+        # blob order was reversed in BOTH cameras.  That happens on the
+        # no-reference detect_ordered path, where the principal-axis sign is
+        # arbitrary (callers passing reference_uv never trigger this):
+        # time-reverse the track and refit.
         track = Track3D(times=track.times,
                         points=track.points[::-1].copy(),
                         reproj_err_px=track.reproj_err_px[::-1].copy())
@@ -88,4 +91,5 @@ def process_shot(cam_a: Camera, blobs_a, cam_b: Camera, blobs_b,
     stats = build_stats(launch, spin, flight,
                         fit_rms_m=fit.rms_residual_m,
                         mean_reproj_px=float(np.mean(track.reproj_err_px)))
-    return ShotResult(stats=stats, track=track, fit=fit, launch=launch)
+    return ShotResult(stats=stats, track=track, fit=fit, launch=launch,
+                      flight=flight)

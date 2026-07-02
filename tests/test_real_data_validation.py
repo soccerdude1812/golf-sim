@@ -13,29 +13,18 @@ out predicts them with 4.0 yd carry / 1.0 yd apex / 1.5 deg descent MAE --
 i.e. the functional form captures the physics rather than memorising the
 table.
 """
+import os
+
 import pytest
 
 from golfsim.constants import ms_from_mph
 from golfsim.flight_model import LaunchConditions, simulate
 
-# club, ball_speed_mph, launch_deg, spin_rpm,
-#   measured carry_yd, max_height_yd, land_angle_deg   (Trackman tour averages)
-REAL = [
-    ("Driver",      167, 10.9, 2686, 275, 32, 38),
-    ("3-wood",      158,  9.2, 3655, 243, 30, 43),
-    ("5-wood",      152,  9.4, 4350, 230, 31, 47),
-    ("Hybrid",      146, 10.2, 4437, 225, 29, 47),
-    ("3-iron",      142, 10.4, 4630, 212, 27, 46),
-    ("4-iron",      137, 11.0, 4836, 203, 28, 48),
-    ("5-iron",      132, 12.1, 5361, 194, 31, 49),
-    ("6-iron",      127, 14.1, 6231, 183, 30, 50),
-    ("7-iron",      120, 16.3, 7097, 172, 32, 50),
-    ("8-iron",      115, 18.1, 7998, 160, 31, 50),
-    ("9-iron",      109, 20.4, 8647, 148, 30, 51),
-    ("PW",          102, 24.2, 9304, 136, 29, 52),
-    ("LPGA Driver", 140, 13.2, 2611, 218, 25, 37),
-    ("LPGA 7-iron", 104, 19.0, 6699, 141, 26, 47),
-]
+from golfsim.tourdata import TOUR_AVERAGES
+
+# (club, ball_speed_mph, launch_deg, spin_rpm, carry_yd, height_yd, land_deg)
+REAL = [(r.club, r.ball_speed_mph, r.launch_deg, r.spin_rpm,
+         r.carry_yd, r.height_yd, r.land_angle_deg) for r in TOUR_AVERAGES]
 
 
 @pytest.mark.parametrize("club,bs,la,spin,carry,height,land", REAL)
@@ -48,6 +37,30 @@ def test_each_club_within_tolerance(club, bs, la, spin, carry, height, land):
         f"{club}: apex {r.apex_yards:.1f} vs meas {height}"
     assert abs(r.descent_angle_deg - land) <= 6.0, \
         f"{club}: descent {r.descent_angle_deg:.1f} vs meas {land}"
+
+
+@pytest.mark.skipif(not os.environ.get("GOLFSIM_SLOW_TESTS"),
+                    reason="hold-out refit takes ~1 min and needs scipy; "
+                           "set GOLFSIM_SLOW_TESTS=1 to run")
+def test_holdout_refit_generalises():
+    """Machine-enforced version of the generalisation claim: refit the five
+    constants with 6 clubs held out and require the unseen clubs to still
+    predict well.  Guards against a future re-fit that overfits the table
+    (the fast per-club assertions above validate on the fit data itself)."""
+    pytest.importorskip("scipy")
+    import subprocess
+    import sys
+    from pathlib import Path
+    out = subprocess.run(
+        [sys.executable,
+         str(Path(__file__).resolve().parent.parent / "scripts" / "fit_aero.py"),
+         "--holdout"],
+        capture_output=True, text=True, timeout=600)
+    assert out.returncode == 0, out.stderr
+    line = [l for l in out.stdout.splitlines() if l.startswith("held-out:")][0]
+    # "held-out: carry MAE X.X yd (max Y.Y) | apex MAE ..."
+    carry_mae = float(line.split("carry MAE")[1].split("yd")[0])
+    assert carry_mae < 6.0, line
 
 
 def test_whole_bag_mean_errors_small():

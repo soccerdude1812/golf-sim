@@ -143,11 +143,12 @@ class BallDetector:
 
         ``reference_uv`` should be the projected tee/ball-at-rest pixel (from
         the calibrated camera: ``cam.project([[0,0,0]])[0]``).  The ball flies
-        AWAY from the tee, so ordering by distance from it gives an
-        unambiguous time order.  Without it we fall back to ordering along
-        the principal axis, whose direction (sign) is arbitrary -- the
-        pipeline then relies on its flies-downrange check to fix a reversed
-        track.
+        AWAY from the tee, so blobs are ordered by their projection onto the
+        tee->track direction -- monotonic in time even when raw pixel
+        distance from the tee is not (steep perspective can bend the image
+        path).  Without it we fall back to ordering along the principal
+        axis, whose direction (sign) is arbitrary -- the pipeline then
+        relies on its flies-downrange check to fix a reversed track.
         """
         blobs = self.detect(frame)
         if len(blobs) <= 1:
@@ -156,10 +157,19 @@ class BallDetector:
         if len(blobs) >= 3:
             blobs = self._ransac_line(blobs, line_tol_px)
         pts = np.array([b.uv for b in blobs])
-        if reference_uv is not None:
-            ref = np.asarray(reference_uv, float)
-            order = np.argsort(np.linalg.norm(pts - ref, axis=1))
+        ref = None if reference_uv is None else np.asarray(reference_uv, float)
+        if ref is not None and np.all(np.isfinite(ref)):
+            axis = pts.mean(axis=0) - ref          # tee -> track direction
+            n = np.linalg.norm(axis)
+            if n > 1e-9:
+                order = np.argsort((pts - ref) @ (axis / n))
+            else:                                  # track centred on the tee
+                order = np.argsort(np.linalg.norm(pts - ref, axis=1))
         else:
+            # No reference, or the tee projects outside/behind the camera
+            # (project() returns NaN): fall back to principal-axis ordering,
+            # whose sign ambiguity the pipeline's downrange/reprojection
+            # checks absorb.
             centred = pts - pts.mean(axis=0)
             _, _, vt = np.linalg.svd(centred, full_matrices=False)
             axis = vt[0]

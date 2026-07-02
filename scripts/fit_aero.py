@@ -25,25 +25,12 @@ import numpy as np
 
 import golfsim.flight_model as fm
 from golfsim.constants import ms_from_mph
+from golfsim.tourdata import TOUR_AVERAGES
 
-# club, ball mph, launch deg, spin rpm,
-#   measured carry yd, max height yd, land angle deg, hold out?
-TABLE = [
-    ("Driver",      167, 10.9, 2686, 275, 32, 38, False),
-    ("3-wood",      158,  9.2, 3655, 243, 30, 43, True),
-    ("5-wood",      152,  9.4, 4350, 230, 31, 47, False),
-    ("Hybrid",      146, 10.2, 4437, 225, 29, 47, True),
-    ("3-iron",      142, 10.4, 4630, 212, 27, 46, False),
-    ("4-iron",      137, 11.0, 4836, 203, 28, 48, True),
-    ("5-iron",      132, 12.1, 5361, 194, 31, 49, False),
-    ("6-iron",      127, 14.1, 6231, 183, 30, 50, True),
-    ("7-iron",      120, 16.3, 7097, 172, 32, 50, False),
-    ("8-iron",      115, 18.1, 7998, 160, 31, 50, True),
-    ("9-iron",      109, 20.4, 8647, 148, 30, 51, False),
-    ("PW",          102, 24.2, 9304, 136, 29, 52, False),
-    ("LPGA Driver", 140, 13.2, 2611, 218, 25, 37, False),
-    ("LPGA 7-iron", 104, 19.0, 6699, 141, 26, 47, True),
-]
+# The measured launch table lives in golfsim/tourdata.py (single source of
+# truth shared with validate_real_data.py and the regression tests); each
+# row's ``holdout`` flag drives --holdout here.
+TABLE = TOUR_AVERAGES
 
 # residual weights: 3 yd carry ~ 2 yd apex ~ 2 deg descent ~ "one unit".
 # Driver and PW get a nudge so the ends of the bag don't drift.
@@ -63,25 +50,25 @@ def simulate_row(bs_mph, la, spin):
 def residuals(x, rows):
     set_constants(x)
     out = []
-    for club, bs, la, spin, carry, height, land, _ in rows:
-        w = ROW_WEIGHT.get(club, 1.0)
-        r = simulate_row(bs, la, spin)
-        out += [w * W_CARRY * (r.carry_yards - carry),
-                w * W_APEX * (r.apex_yards - height),
-                w * W_DESC * (r.descent_angle_deg - land)]
+    for row in rows:
+        w = ROW_WEIGHT.get(row.club, 1.0)
+        r = simulate_row(row.ball_speed_mph, row.launch_deg, row.spin_rpm)
+        out += [w * W_CARRY * (r.carry_yards - row.carry_yd),
+                w * W_APEX * (r.apex_yards - row.height_yd),
+                w * W_DESC * (r.descent_angle_deg - row.land_angle_deg)]
     return np.array(out)
 
 
 def report(rows, label):
     errs = {"carry": [], "apex": [], "desc": []}
-    for club, bs, la, spin, carry, height, land, _ in rows:
-        r = simulate_row(bs, la, spin)
-        errs["carry"].append(abs(r.carry_yards - carry))
-        errs["apex"].append(abs(r.apex_yards - height))
-        errs["desc"].append(abs(r.descent_angle_deg - land))
-        print(f"  {club:12s} carry {r.carry_yards:6.1f}/{carry:3d} yd   "
-              f"apex {r.apex_yards:4.1f}/{height:2d} yd   "
-              f"descent {r.descent_angle_deg:4.1f}/{land:2d} deg")
+    for row in rows:
+        r = simulate_row(row.ball_speed_mph, row.launch_deg, row.spin_rpm)
+        errs["carry"].append(abs(r.carry_yards - row.carry_yd))
+        errs["apex"].append(abs(r.apex_yards - row.height_yd))
+        errs["desc"].append(abs(r.descent_angle_deg - row.land_angle_deg))
+        print(f"  {row.club:12s} carry {r.carry_yards:6.1f}/{row.carry_yd:3.0f} yd   "
+              f"apex {r.apex_yards:4.1f}/{row.height_yd:2.0f} yd   "
+              f"descent {r.descent_angle_deg:4.1f}/{row.land_angle_deg:2.0f} deg")
     print(f"{label}: carry MAE {np.mean(errs['carry']):.1f} yd "
           f"(max {np.max(errs['carry']):.1f}) | "
           f"apex MAE {np.mean(errs['apex']):.1f} yd | "
@@ -100,8 +87,8 @@ def main():
                          "out-of-sample error on the rest")
     args = ap.parse_args()
 
-    fit_rows = [r for r in TABLE if not (args.holdout and r[-1])]
-    held_rows = [r for r in TABLE if args.holdout and r[-1]]
+    fit_rows = [r for r in TABLE if not (args.holdout and r.holdout)]
+    held_rows = [r for r in TABLE if args.holdout and r.holdout]
 
     x0 = np.array([fm._CD0, fm._CD_SPIN, fm._CD_RE, fm._CL_GAIN, fm._CL_HALF])
     lo = np.array([0.02, 0.00, 0.00, 0.10, 0.01])

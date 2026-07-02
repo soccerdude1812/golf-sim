@@ -67,6 +67,8 @@ def main():
     # With --strobe pico the Pico fires shutters + strobe on its own impact
     # trigger (pico/strobe_controller.py); the Pi only collects frames.  The
     # cameras must be in external-trigger mode (see docs/BUILD.md bring-up).
+    if args.strobe == "pico":
+        _check_trigger_mode()
     strobe = (StrobeController(pulses=5, interval_us=strobe_dt * 1e6)
               if args.strobe == "pi" else None)
     backend_a = Picamera2Backend(camera_num=0, exposure_us=int(5 * strobe_dt * 1e6))
@@ -74,21 +76,32 @@ def main():
     det = BallDetector(min_radius_px=3, max_radius_px=150)
 
     shot_no = 0
+    misses = 0
     try:
         while args.shots == 0 or shot_no < args.shots:
             _wait_for_trigger(args.trigger, backend_a)
             if strobe is not None:
                 strobe.fire()
-            frame_a = backend_a.read()
-            frame_b = backend_b.read()
-
-            blobs_a = det.detect_ordered(
-                frame_a, reference_uv=cam_a.project([[0.0, 0.0, 0.0]])[0])
-            blobs_b = det.detect_ordered(
-                frame_b, reference_uv=cam_b.project([[0.0, 0.0, 0.0]])[0])
+            # The frame containing the strobe train may not be the first one
+            # returned (free-running cameras buffer; triggered frames arrive
+            # after XTR): scan the next few frames per camera and keep the
+            # one with the most strobe images.
+            tee_a = cam_a.project([[0.0, 0.0, 0.0]])[0]
+            tee_b = cam_b.project([[0.0, 0.0, 0.0]])[0]
+            blobs_a = _best_strobed_frame(backend_a, det, tee_a)
+            blobs_b = _best_strobed_frame(backend_b, det, tee_b)
             if len(blobs_a) < 3 or len(blobs_a) != len(blobs_b):
                 print(f"  miss: {len(blobs_a)}/{len(blobs_b)} blobs; retrying")
+                misses += 1
+                if misses == 3 and args.strobe == "pico":
+                    print("  hint: repeated misses with --strobe pico means "
+                          "the Pico may not be firing.  Check the Pico is "
+                          "flashed+wired (pico/README.md) and the cameras "
+                          "are in external-trigger mode (BUILD.md step 2b), "
+                          "or use --strobe pi to drive the strobe from this "
+                          "Pi for bench tests.")
                 continue
+            misses = 0
 
             px_a = np.array([b.uv for b in blobs_a])
             px_b = np.array([b.uv for b in blobs_b])
@@ -100,6 +113,37 @@ def main():
     finally:
         backend_a.close()
         backend_b.close()
+
+
+def _best_strobed_frame(backend, det, reference_uv, tries=3):
+    """Read up to ``tries`` consecutive frames and return the ordered blob
+    list of the frame with the most strobe images (the flash train may land
+    one or two frames after the read call)."""
+    best = []
+    for _ in range(tries):
+        blobs = det.detect_ordered(backend.read(), reference_uv=reference_uv)
+        if len(blobs) > len(best):
+            best = blobs
+        if len(best) >= 5:
+            break
+    return best
+
+
+def _check_trigger_mode():
+    """Warn if the IMX296 external-trigger mode isn't enabled (Pico mode
+    needs it or the cameras free-run and ignore the shared XTR line)."""
+    from pathlib import Path as _P
+    p = _P("/sys/module/imx296/parameters/trigger_mode")
+    try:
+        if p.exists() and p.read_text().strip() != "1":
+            print("  ! WARNING: /sys/module/imx296/parameters/trigger_mode "
+                  "is not 1.\n"
+                  "  ! The cameras will free-run and ignore the Pico's XTR "
+                  "line.  Enable it:\n"
+                  "  !   sudo su -c 'echo 1 > "
+                  "/sys/module/imx296/parameters/trigger_mode'")
+    except OSError:
+        pass
 
 
 def _wait_for_trigger(mode, backend):

@@ -24,6 +24,16 @@ MPH_PER_MS: float = 2.2369362921       # 1 m/s in mph
 MS_PER_MPH: float = 1.0 / MPH_PER_MS
 YARDS_PER_M: float = 1.0936132983
 M_PER_YARD: float = 1.0 / YARDS_PER_M
+FEET_PER_M: float = 3.280839895
+# --- Coordinate convention ------------------------------------------------
+# The world frame is right-handed with X down the target line and Z up, so
+# +Y points LEFT of the target line.  Golf convention reports lateral
+# quantities (azimuth, side spin, offline) positive-RIGHT.  Multiply a
+# golf-convention "rightward" value by this to get its world-Y component
+# (and vice versa -- the factor is its own inverse).  Every world<->golf
+# lateral sign flip in the codebase goes through this constant.
+WORLD_Y_PER_GOLF_RIGHT: float = -1.0
+
 RPM_PER_RADS: float = 60.0 / (2.0 * math.pi)
 RADS_PER_RPM: float = 1.0 / RPM_PER_RADS
 DEG_PER_RAD: float = 180.0 / math.pi

@@ -34,7 +34,7 @@ import numpy as np
 
 from .constants import (
     AIR_DENSITY_KGM3, BALL_AREA_M2, BALL_MASS_KG, BALL_RADIUS_M, GRAVITY_MS2,
-    RAD_PER_DEG, YARDS_PER_M, rads_from_rpm,
+    RAD_PER_DEG, WORLD_Y_PER_GOLF_RIGHT, YARDS_PER_M, rads_from_rpm,
 )
 
 # Empirical aerodynamic coefficient model -- least-squares fit to the
@@ -46,7 +46,10 @@ _CD0 = 0.0673         # base drag coefficient
 _CD_SPIN = 0.1314     # extra drag induced by spin (spin ratio S)
 _CD_RE = 0.1887       # Reynolds-proxy term: scales with (_V_REF / speed)
 _V_REF = 40.0         # m/s reference speed for the Reynolds proxy
-_CD_MAX = 0.50        # cap (sub-critical Cd); keeps slow chips physical
+_CD_MAX = 0.50        # sub-critical sphere Cd (below the drag crisis).  The
+                      # tour-data fit only covers ~45-82 m/s; below ~17 m/s
+                      # the cap governs, so short-game (chip/putt) carry is
+                      # physically plausible but not Trackman-validated.
 _CL_GAIN = 0.4360     # lift gain
 _CL_HALF = 0.1793     # spin ratio at half-max lift
 
@@ -77,7 +80,7 @@ class LaunchConditions:
         az = self.azimuth_deg * RAD_PER_DEG
         v = self.ball_speed_ms
         vx = v * np.cos(el) * np.cos(az)
-        vy = -v * np.cos(el) * np.sin(az)
+        vy = WORLD_Y_PER_GOLF_RIGHT * v * np.cos(el) * np.sin(az)
         vz = v * np.sin(el)
         return np.array([vx, vy, vz])
 
@@ -91,7 +94,7 @@ class LaunchConditions:
         """
         back = rads_from_rpm(self.back_spin_rpm)
         side = rads_from_rpm(self.side_spin_rpm)
-        return np.array([0.0, -back, -side])
+        return np.array([0.0, -back, WORLD_Y_PER_GOLF_RIGHT * side])
 
 
 @dataclass
@@ -194,7 +197,7 @@ def simulate(launch: LaunchConditions, dt: float = 0.002,
             v_land = prev_v + frac * (v - prev_v)
             traj[-1] = ground
             carry = float(ground[0])
-            offline = float(-ground[1])       # world +Y is left; report +right
+            offline = float(WORLD_Y_PER_GOLF_RIGHT * ground[1])
             land_speed = float(np.linalg.norm(v_land))
             horiz = float(np.hypot(v_land[0], v_land[1]))
             descent = float(np.degrees(np.arctan2(-v_land[2], horiz)))
@@ -210,6 +213,7 @@ def simulate(launch: LaunchConditions, dt: float = 0.002,
     return FlightResult(
         carry_m=float(p[0]), total_m=float(p[0]), apex_m=apex,
         flight_time_s=t, descent_angle_deg=0.0,
-        landing_speed_ms=float(np.linalg.norm(v)), offline_m=float(-p[1]),
+        landing_speed_ms=float(np.linalg.norm(v)),
+        offline_m=float(WORLD_Y_PER_GOLF_RIGHT * p[1]),
         trajectory=np.array(traj),
     )

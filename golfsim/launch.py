@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from .constants import DEG_PER_RAD, MPH_PER_MS
+from .constants import DEG_PER_RAD, MPH_PER_MS, WORLD_Y_PER_GOLF_RIGHT
 from .tracking import VelocityFit
 
 
@@ -39,7 +39,7 @@ def launch_from_velocity(fit: VelocityFit,
 
     launch_angle = np.degrees(np.arctan2(vz, horiz))
     # world +Y is left of the target line; report golf convention (+ = right)
-    azimuth = np.degrees(np.arctan2(-vy, vx))
+    azimuth = np.degrees(np.arctan2(WORLD_Y_PER_GOLF_RIGHT * vy, vx))
 
     smash = None
     if club_speed_ms and club_speed_ms > 0:

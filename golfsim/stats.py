@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 
-from .constants import MPH_PER_MS, YARDS_PER_M
+from .constants import FEET_PER_M, MPH_PER_MS
 from .flight_model import FlightResult
 from .launch import LaunchParameters
 from .spin import SpinEstimate
@@ -80,7 +80,7 @@ def build_stats(launch: LaunchParameters, spin: SpinEstimate,
         smash_factor=launch.smash_factor,
         carry_yards=flight.carry_yards,
         total_yards=flight.total_yards,
-        apex_ft=flight.apex_m * 3.280839895,
+        apex_ft=flight.apex_m * FEET_PER_M,
         descent_angle_deg=flight.descent_angle_deg,
         flight_time_s=flight.flight_time_s,
         offline_yards=flight.offline_yards,
