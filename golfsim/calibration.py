@@ -100,6 +100,42 @@ def calibrate_stereo(images_a, images_b, intr_a: IntrinsicResult,
     return R, T.ravel(), float(rms)
 
 
+def set_world_from_board(K_a, dist_a, image_points_a, object_points_world,
+                         R_ab, T_ab):
+    """Anchor a stereo pair (camera A = reference) to the ball/target world
+    frame from ONE view of the chessboard lying on the hitting mat.
+
+    Lay the board flat so its corners have KNOWN world coordinates: e.g. the
+    origin corner at the ball position, one edge pointing down the target
+    line (+X), Z = 0 on the mat.  Capture a single view from camera A, detect
+    the corners, and pass:
+
+    ``image_points_a``       Nx2 detected corner pixels in camera A
+    ``object_points_world``  Nx3 corner positions in WORLD metres (same order)
+    ``R_ab``, ``T_ab``       the stereo result from ``calibrate_stereo``
+                             (pose of camera B relative to camera A)
+
+    solvePnP recovers the world->cameraA pose; composing with the stereo
+    transform places camera B too.  Returns (R_a, t_a, R_b, t_b), the
+    world->camera transforms to feed ``cameras_from_world_poses``.
+    """
+    if cv2 is None:
+        raise RuntimeError("opencv required for anchoring")
+    obj = np.asarray(object_points_world, np.float32).reshape(-1, 3)
+    img = np.asarray(image_points_a, np.float32).reshape(-1, 1, 2)
+    ok, rvec, tvec = cv2.solvePnP(obj, img, np.asarray(K_a, float),
+                                  np.asarray(dist_a, float))
+    if not ok:
+        raise ValueError("solvePnP failed on the anchoring view")
+    R_a, _ = cv2.Rodrigues(rvec)
+    t_a = tvec.ravel()
+    R_ab = np.asarray(R_ab, float)
+    T_ab = np.asarray(T_ab, float).ravel()
+    R_b = R_ab @ R_a                  # X_b = R_ab X_a + T_ab, X_a = R_a X_w + t_a
+    t_b = R_ab @ t_a + T_ab
+    return R_a, t_a, R_b, t_b
+
+
 def cameras_from_world_poses(K_a, dist_a, R_a, t_a, size_a,
                              K_b, dist_b, R_b, t_b, size_b):
     """Build the two world-frame ``Camera`` objects from explicit world->cam

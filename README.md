@@ -49,7 +49,7 @@ Detected 5 / 5 strobe images (face-on / behind-high)
 
 ```
 $ python -m pytest -q
-51 passed
+54 passed
 ```
 
 - **Ball speed / launch angle / direction**: recovered to <1 mph / <0.5° even
@@ -119,8 +119,8 @@ golfsim/     core library (importable, fully tested)
 scripts/     run_demo, feasibility_report, validate_real_data, fit_aero,
              calibrate, run_live
 pico/        Raspberry Pi Pico firmware (shutter + strobe timing sequencer)
-tests/       51 tests: geometry, flight model, conventions, feasibility, full
-             pipeline, real data
+tests/       54 tests: geometry, flight model, conventions, feasibility,
+             anchoring/pairing, full pipeline, real data
 docs/        BUILD, HARDWARE, CAMERA_PLACEMENT, THEORY, CALIBRATION, FEASIBILITY,
              system_diagram.png
 ```

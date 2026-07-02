@@ -44,9 +44,11 @@ def spin_from_marker_track(marker_offsets_px, strobe_interval_s,
     angular increments.  This is exact when the spin axis points along the
     camera's optical axis and degrades as the axis tilts away -- so measure
     from the camera that faces the spin axis (the face-on camera for
-    backspin-dominated shots).  ``side_axis_tilt_deg`` is the observed tilt
-    of the spin axis; positive tilt = fade/slice component (ball curves
-    right), matching ``LaunchConditions.side_spin_rpm``.
+    backspin-dominated shots).  The rate measurement itself has no sign or
+    axis: ``side_axis_tilt_deg`` is an INPUT you supply (e.g. from the
+    mark's lateral drift across pulses), not something derived from the
+    offsets; positive tilt = fade/slice component (ball curves right),
+    matching ``LaunchConditions.side_spin_rpm``.
     """
     offs = np.atleast_2d(np.asarray(marker_offsets_px, float))
     if offs.shape[0] < 2:

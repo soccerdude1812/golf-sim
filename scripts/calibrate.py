@@ -68,8 +68,9 @@ def main():
     print(f"Saved rig -> {args.out}")
     print("NOTE: this rig uses camera A as the origin.  Ball SPEED will be "
           "correct as-is, but launch/azimuth ANGLES are relative to camera A "
-          "until you anchor the rig to the ball/target-line world frame "
-          "(docs/CALIBRATION.md, step 4).  run_live.py will warn until then.")
+          "until you anchor the rig to the ball/target-line world frame with "
+          "calibration.set_world_from_board (docs/CALIBRATION.md, step 4).  "
+          "run_live.py will warn until then.")
 
 
 if __name__ == "__main__":

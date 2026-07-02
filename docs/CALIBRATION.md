@@ -58,16 +58,18 @@ B w.r.t. camera A, then writes `rig.json`. Check the printed RMS values:
 launch angles and a sensible target line you anchor it to the room:
 
 1. Lay the chessboard flat on the hitting mat with a known corner at the ball
-   position and one edge along the target line.
-2. Capture one view from camera A and `solvePnP` the board → camera A's pose in
-   the world frame.
-3. Compose with the stereo result to place both cameras in world coordinates,
-   then `cameras_from_world_poses(...)` + `save_rig(...)`.
+   position and one edge along the target line (so each corner has known
+   world coordinates, Z = 0 on the mat).
+2. Capture one view from camera A and detect the corners
+   (`cv2.findChessboardCorners`).
+3. Call `golfsim.calibration.set_world_from_board(K_a, dist_a, corners,
+   corner_world_positions, R, T)` — it solvePnPs camera A's world pose and
+   composes the stereo result — then `cameras_from_world_poses(...)` +
+   `save_rig(...)`.
 
-A helper for this anchoring step is intentionally left as a short script to
-write against your exact board placement; the math is three lines of pose
-composition and the function signatures in `golfsim/calibration.py` are set up
-for it.
+Until you do this, `run_live.py` prints a warning: an un-anchored rig
+measures ball *speed* correctly but reports launch/azimuth angles in camera
+A's coordinates, not relative to the target line.
 
 ## Shortcut — use the verified default geometry
 
