@@ -1,0 +1,19 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.venv/
+venv/
+*.log
+
+# Captured frames / recordings / calibration outputs (keep the dir, not blobs)
+calibration_data/*.json
+calibration_data/*.npz
+captures/
+# *.png (diagram is committed explicitly below)
+*.jpg
+*.mp4
+!docs/**/*.png
