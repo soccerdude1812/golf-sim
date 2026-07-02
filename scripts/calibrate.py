@@ -66,6 +66,10 @@ def main():
         ib.K, ib.dist, R, T, ib.image_size)
     save_rig(args.out, cam_a, cam_b, args.strobe_interval_us * 1e-6)
     print(f"Saved rig -> {args.out}")
+    print("NOTE: this rig uses camera A as the origin.  Ball SPEED will be "
+          "correct as-is, but launch/azimuth ANGLES are relative to camera A "
+          "until you anchor the rig to the ball/target-line world frame "
+          "(docs/CALIBRATION.md, step 4).  run_live.py will warn until then.")
 
 
 if __name__ == "__main__":

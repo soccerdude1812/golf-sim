@@ -34,15 +34,19 @@ class SpinEstimate:
     note: str = ""
 
 
-def spin_from_marker_track(marker_offsets_px, ball_radius_px,
-                           strobe_interval_s, side_axis_tilt_deg=0.0) -> SpinEstimate:
+def spin_from_marker_track(marker_offsets_px, strobe_interval_s,
+                           side_axis_tilt_deg=0.0) -> SpinEstimate:
     """Estimate spin from the angular travel of a surface mark.
 
     ``marker_offsets_px`` is a sequence of (du, dv) vectors giving the mark's
     position relative to the ball centre in each strobed image.  The angle of
     that vector advances by omega*dt between pulses; we average the per-pulse
-    angular increments.  ``ball_radius_px`` sets the scale (a mark at the rim
-    rotates through the largest visible arc).
+    angular increments.  This is exact when the spin axis points along the
+    camera's optical axis and degrades as the axis tilts away -- so measure
+    from the camera that faces the spin axis (the face-on camera for
+    backspin-dominated shots).  ``side_axis_tilt_deg`` is the observed tilt
+    of the spin axis; positive tilt = fade/slice component (ball curves
+    right), matching ``LaunchConditions.side_spin_rpm``.
     """
     offs = np.atleast_2d(np.asarray(marker_offsets_px, float))
     if offs.shape[0] < 2:

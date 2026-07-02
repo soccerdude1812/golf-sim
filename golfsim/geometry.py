@@ -5,11 +5,15 @@ World frame convention used throughout the project
 Origin is the ball-at-rest position on the tee/mat.
 
     X : down the target line (the direction the ball is supposed to fly)
-    Y : lateral, completing a right-handed frame (Y = Z x X)
+    Y : lateral, completing a right-handed frame (Y = Z x X).  Viewed from
+        behind the ball looking downrange, +Y points LEFT of the target
+        line (for a right-handed golfer, +Y is the side the golfer stands on)
     Z : straight up
 
-A *launch* therefore has a large +X velocity component, +Z gives the
-vertical launch angle, and the sign of Y gives push (right) / pull (left).
+A *launch* therefore has a large +X velocity component and +Z gives the
+vertical launch angle.  A push (ball starting right) has vy < 0, a pull
+(left) has vy > 0; user-facing outputs follow the golf convention
+"positive = right", with the sign flip applied in launch.py/flight_model.py.
 
 A camera is modelled as a pinhole with intrinsic matrix K and a world->camera
 rigid transform (R, t):  x_cam = R @ X_world + t.  The optical axis is the
@@ -40,14 +44,17 @@ def look_at(center, target, world_up=(0.0, 0.0, 1.0)):
         raise ValueError("camera center and target coincide")
     z_c = z_c / n
 
-    x_c = np.cross(world_up, z_c)
+    # OpenCV convention: camera x right, y DOWN, z forward.  For an upright
+    # camera, image-down must map opposite the world up vector, which needs
+    # x_c = forward x up (NOT up x forward, which flips the image).
+    x_c = np.cross(z_c, world_up)
     if np.linalg.norm(x_c) < 1e-9:
         # Looking straight up/down: pick an arbitrary up.
         world_up = np.array([1.0, 0.0, 0.0])
-        x_c = np.cross(world_up, z_c)
+        x_c = np.cross(z_c, world_up)
     x_c = x_c / np.linalg.norm(x_c)
 
-    y_c = np.cross(z_c, x_c)  # already unit length
+    y_c = np.cross(z_c, x_c)  # already unit length; points image-down
 
     R = np.vstack([x_c, y_c, z_c])      # rows are camera axes in world coords
     t = -R @ center

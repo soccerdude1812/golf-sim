@@ -3,10 +3,10 @@
 This is the complete hardware shopping list and physical build for the
 two-camera launch monitor. Everything here matches the geometry and timing the
 software already expects (`golfsim/config.py`), and the whole thing comes in
-**≈ $370**, under the $500 / two-camera budget.
+**≈ $350**, under the $500 / two-camera budget.
 
 > Design in one sentence: two hardware-synchronised global-shutter cameras stare
-> at the first ~0.3 m of ball flight; a microcontroller fires both shutters and
+> at the first ~0.5 m of ball flight; a microcontroller fires both shutters and
 > a 5-pulse IR strobe at the same instant, so each frame holds 5 sharp,
 > time-stamped ball images that triangulate to a 3-D launch.
 
@@ -44,15 +44,12 @@ item, any [Raspberry Pi Approved Reseller](https://www.raspberrypi.com/resellers
 |------|----:|------:|-----|
 | Mini tripod / ball-head mount (one tall enough for the ~1.85 m behind-cam, or wall/ceiling bracket) | 2 | 12 | [UBeesize/Amazon](https://www.amazon.com/dp/B07BZGKWX1) |
 
-### Optional but recommended
-| Item | Qty | ~$ ea | Buy |
-|------|----:|------:|-----|
-| 850 nm band-pass filter — makes the strobe pop in a lit room | 2 | 10 | [Amazon](https://www.amazon.com/s?k=850nm+bandpass+filter) |
-
-**Subtotal ≈ $375** (≈ $395 with filters). Leaves headroom under the $500 budget.
+**Subtotal ≈ $350** (≈ $370 with the optional filters below). Leaves headroom
+under the $500 budget.
 
 ### Optional but recommended
-- **2× 850 nm band-pass filter** (CS-thread or stick-on, ~$10 ea). Makes the
+- **2× 850 nm band-pass filter** (CS-thread or stick-on, ~$10 ea,
+  [search](https://www.amazon.com/s?k=850nm+bandpass+filter)). Makes the
   strobe images pop against room light — strongly recommended if you can't dim
   the room. Without it, hit in moderate/low ambient light.
 - **Marked range balls** (or just draw a bold dot/line with a Sharpie). Needed
@@ -62,21 +59,23 @@ item, any [Raspberry Pi Approved Reseller](https://www.raspberrypi.com/resellers
 
 ### Already assumed present (not in budget)
 - **Hitting net** (you have one), **mat**, **balls**. The measurement happens
-  in the first ~0.3 m *before* the net, so the net never blocks it.
+  in the first ~0.5 m *before* the net, so the net never blocks it.
 
 ---
 
 ## 2. Physical layout (positions are exact — they match the code)
 
 World frame: ball at rest = origin; **+X** down the target line; **+Z** up;
-units metres. These are the defaults in `golfsim/config.py`, already verified to
-keep all 5 strobe images in-frame and separated from 95→183 mph.
+**+Y** = left of the target line (right-handed frame — the side a right-handed
+golfer stands on); units metres. Both cameras sit at *negative* Y, across the
+ball from the golfer. These are the defaults in `golfsim/config.py`, already
+verified to keep all 5 strobe images in-frame and separated from 95→183 mph.
 
 ```
 TOP VIEW                                   SIDE VIEW (looking along -Y)
    +X (target) →                              +Z   ┌─┐ B (behind-high, ~1.85 m up,
                                                │    └─┘    above the swing)
-  ●ball ··· launch corridor ···  ║net          │  ◯ ← ball flight (first ~0.3 m)
+  ●ball ··· launch corridor ···  ║net          │  ◯ ← ball flight (first ~0.5 m)
    │            ↑ both cams aim here            │ ◯
    │         (0.20, 0, 0.06)                    │◯  ●ball  ┌─┐ A (low, to the side)
    │                                            └──────────└─┘──── +X
@@ -118,7 +117,10 @@ Pico GPIO (strobe) ──[220Ω]── Gate
 ```
 Size the LED strings/series resistors for the array's forward voltage at your
 pulse current per its datasheet. Brief 12 µs pulses keep average power (and
-eye-safety margin) low.
+eye-safety margin) low. Note the IRLZ44N's on-resistance is specified at
+4.5–10 V gate drive; at the Pico's 3.3 V it conducts fine for this brief
+pulsed load but runs a little higher Rds(on) — no heatsink needed at <1 %
+duty.
 
 ### 3c. Camera external trigger (XTR) — hardware sync
 Both cameras expose **only when the Pico tells them to**, at the same instant.
@@ -132,8 +134,15 @@ Per the [Raspberry Pi GS external-trigger docs](https://www.raspberrypi.com/docu
   board or external-trigger mode won't engage (noted in the RPi docs).
 
 ### 3d. Impact trigger → Pico
-- Piezo disc taped near the mat (or electret mic module) → a Pico input pin.
-- A strike spikes the input; the Pico debounces and starts the capture sequence.
+- Piezo disc taped near the mat (or an electret mic module with a digital
+  output) → Pico **GP15**.
+- ⚠️ **Never wire a bare piezo directly to a GPIO** — a hard strike can spike
+  a piezo to tens of volts. Condition it first:
+  `piezo (+) ──[100kΩ to GND]──[1kΩ series]──►GP15` plus a small signal diode
+  from the pin to 3V3 (clamp), or use a comparator/mic breakout that outputs a
+  clean 0–3.3 V pulse. Idle low, pulse high on a strike (that's what the
+  firmware expects).
+- A strike pulses GP15 high; the Pico debounces and starts the capture sequence.
 
 ---
 
@@ -144,9 +153,10 @@ On each detected strike:
 
 ```
 1. (impact spike on input pin)
-2. assert XTR low on BOTH cameras  ──► exposure window opens (~8 ms)
+2. assert XTR low on BOTH cameras  ──► exposure window opens (~7 ms)
 3. inside that window, pulse the strobe MOSFET 5×:
-       12 µs ON, then 1300 µs gap   (matches StrobeConfig in the code)
+       12 µs ON, 1300 µs pulse-to-pulse (i.e. ~1288 µs gap;
+       matches StrobeConfig in the code)
 4. release XTR  ──► both cameras read out one frame each,
                     each containing the same 5 ball positions
 5. Pi 5 pulls both frames over CSI and runs the pipeline
@@ -169,6 +179,10 @@ sudo apt update && sudo apt full-upgrade -y
 # 2. Both IMX296 cameras should enumerate (after wiring):
 rpicam-hello --list-cameras        # expect cam0 and cam1, both imx296
 
+# 2b. Enable external-trigger mode on the GS cameras (required for XTR sync;
+#     re-run after every boot, or add to /etc/rc.local):
+sudo su -c 'echo 1 > /sys/module/imx296/parameters/trigger_mode'
+
 # 3. Get the code + deps
 git clone <your-fork-or-this-repo> golf-sim && cd golf-sim
 sudo apt install -y python3-picamera2 python3-opencv python3-numpy
@@ -176,7 +190,7 @@ pip install -e .                   # or: pip install -r requirements.txt
 
 # 4. Sanity check the math with no hardware:
 python scripts/run_demo.py
-python -m pytest -q                # 45 tests should pass
+python -m pytest -q                # the whole suite should pass
 
 # 5. Calibrate the rig (chessboard) -> calibration_data/rig.json
 python scripts/calibrate.py calib --pattern 9x6 --square 0.025
@@ -214,7 +228,7 @@ path before wiring the impact sensor.
 
 ## 7. Two honest gotchas
 
-- **Ambient light vs the strobe.** The sensor integrates the whole ~8 ms window,
+- **Ambient light vs the strobe.** The sensor integrates the whole ~7 ms window,
   so bright room light can swamp the 12 µs flashes. Fixes, cheapest first: dim
   the room → add the 850 nm band-pass filters → shorten the exposure window.
 - **Spin needs a marked ball.** Without a trackable mark the system *estimates*

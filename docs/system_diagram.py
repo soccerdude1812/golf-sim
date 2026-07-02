@@ -35,17 +35,18 @@ ax.annotate("", xy=(1.9, 0), xytext=(0, 0),
             arrowprops=dict(arrowstyle="-|>", color="#888", lw=1.5, ls="--"))
 ax.text(1.55, 0.08, "target line  (+X)", color="#888", fontsize=9)
 # measurement corridor
-ax.add_patch(Rectangle((0, -0.18), 0.4, 0.36, color=C_ZONE, alpha=0.55, zorder=0))
-ax.text(0.2, 0.27, "measured\nzone ~0.3 m", ha="center", fontsize=8, color="#9a7d00")
+ax.add_patch(Rectangle((0, -0.18), 0.5, 0.36, color=C_ZONE, alpha=0.55, zorder=0))
+ax.text(0.2, 0.27, "measured\nzone ~0.5 m", ha="center", fontsize=8, color="#9a7d00")
 # net
 ax.add_patch(Rectangle((1.78, -0.8), 0.06, 1.6, color=C_NET))
 ax.text(1.81, 0.9, "NET\n(≥ 0.7 m away)", ha="center", fontsize=9, color=C_NET)
 # ball
 ax.add_patch(Circle((0, 0), 0.05, color=C_BALL, ec="k", zorder=5))
 ax.text(0, -0.16, "ball", ha="center", fontsize=8)
-# golfer
-ax.add_patch(Circle((-0.05, -0.55), 0.16, color=C_GOLF, alpha=0.85))
-ax.text(-0.05, -0.55, "golfer", ha="center", va="center", fontsize=7, color="white")
+# golfer -- a right-hander stands on the +Y side (world frame is right-handed:
+# +Y = LEFT of the target line), across the ball from both cameras
+ax.add_patch(Circle((-0.05, 0.55), 0.16, color=C_GOLF, alpha=0.85))
+ax.text(-0.05, 0.55, "golfer", ha="center", va="center", fontsize=7, color="white")
 # Camera A face-on side (0.20,-1.25)
 ax.add_patch(Rectangle((0.13, -1.32), 0.14, 0.14, color=C_CAM, zorder=5))
 ax.text(0.45, -1.25, "CAM A\nface-on / side\n(0.20, -1.25)", fontsize=8, color=C_CAM, va="center")
@@ -74,11 +75,11 @@ ax2.add_patch(Rectangle((-1.6, -0.05), 4.0, 0.05, color="#8a6d3b"))
 ax2.add_patch(Rectangle((1.78, 0), 0.06, 2.1, color=C_NET))
 ax2.text(1.81, 2.18, "NET", ha="center", fontsize=9, color=C_NET)
 # measured zone + ball flight dots
-ax2.add_patch(Rectangle((0, 0), 0.4, 0.5, color=C_ZONE, alpha=0.5))
+ax2.add_patch(Rectangle((0, 0), 0.5, 0.5, color=C_ZONE, alpha=0.5))
 for i in range(5):
     x = i * 0.075; z = 0.06 + i * 0.016
     ax2.add_patch(Circle((x, z), 0.022, color=C_BALL, ec="k", zorder=6))
-ax2.text(0.2, 0.6, "5 strobe images\n(first ~0.3 m)", ha="center", fontsize=8, color="#9a7d00")
+ax2.text(0.2, 0.6, "5 strobe images\n(first ~0.5 m)", ha="center", fontsize=8, color="#9a7d00")
 # golfer + swing-arc keep-out
 ax2.add_patch(Rectangle((-0.18, 0), 0.18, 0.95, color=C_GOLF, alpha=0.85))
 ax2.text(-0.09, 1.0, "golfer", ha="center", fontsize=7, color=C_GOLF)

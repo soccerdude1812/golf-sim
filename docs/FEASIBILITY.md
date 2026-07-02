@@ -52,7 +52,8 @@ higher‑megapixel webcam.
 ## Speed‑resolution sanity check
 
 With ~0.3 px sub‑pixel centroid error and a 5‑sample baseline spanning
-~40–60 cm of travel, the fractional speed error is roughly
+~16–42 cm of travel (4 intervals × 4.1–10.6 cm depending on ball speed), the
+fractional speed error is roughly
 `√2 · 0.3 px ÷ (total displacement in px)` ≈ **0.1 %** — i.e. ±0.1–0.2 mph on a
 167 mph drive. The Monte‑Carlo test `test_noise_sensitivity_speed_resolution`
 confirms <1 % average error under 0.3 px jitter across 20 random shots.

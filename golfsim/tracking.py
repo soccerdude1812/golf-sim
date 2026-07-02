@@ -7,7 +7,7 @@ pair is triangulated to a 3-D world point with a known timestamp.  A constant
 -acceleration model is then least-squares fit per axis; the velocity at the
 first sample is the launch velocity.  A constant-acceleration (rather than
 constant-velocity) fit absorbs gravity and the small aerodynamic deceleration
-that act over the ~20 ms measurement window.
+that act over the ~5 ms measurement window (5 pulses x 1.3 ms).
 """
 
 from __future__ import annotations

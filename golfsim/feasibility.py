@@ -153,8 +153,8 @@ def evaluate(rig: RigConfig, ball_speed_ms: float,
 
 def pi_global_shutter_strobed() -> RigConfig:
     """The recommended build: Raspberry Pi Global Shutter camera (Sony IMX296,
-    1456x1088, 3.45 um pixels) + 6 mm CS lens, 1.0 m from a 1.2 m corridor,
-    with a 4-pulse IR strobe (12 us pulses, 900 us apart) per exposure."""
+    1456x1088, 3.45 um pixels) + 6 mm CS lens, 1.25 m from a 0.6 m corridor,
+    with a 5-pulse IR strobe (12 us pulses, 1300 us apart) per exposure."""
     return RigConfig(
         name="Pi GS + 6mm + IR strobe",
         sensor_w_px=1456, sensor_h_px=1088, pixel_pitch_um=3.45,

@@ -44,7 +44,7 @@ class StrobeController:
     array fires ``pulses`` flashes of ``pulse_width_us`` spaced ``interval_us``
     apart, inside one camera exposure window."""
     pulses: int = 5
-    interval_us: float = 800.0
+    interval_us: float = 1300.0         # keep in sync with config.StrobeConfig
     pulse_width_us: float = 12.0
     gpio_pin: int = 18
 

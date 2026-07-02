@@ -19,10 +19,6 @@ dev = ["pytest>=7.0"]
 # Raspberry Pi hardware extras (install via apt on the Pi, see docs/HARDWARE.md)
 pi = ["picamera2", "gpiozero"]
 
-[project.scripts]
-golfsim-demo = "scripts.run_demo:main"
-golfsim-feasibility = "scripts.feasibility_report:main"
-
 [tool.setuptools]
 packages = ["golfsim"]
 

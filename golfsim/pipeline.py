@@ -42,6 +42,15 @@ def process_shot(cam_a: Camera, blobs_a, cam_b: Camera, blobs_b,
     """
     track = build_track(cam_a, blobs_a, cam_b, blobs_b, strobe_interval_s)
     fit = fit_launch_velocity(track)
+    if fit.velocity0[0] < 0.0:
+        # The ball always flies downrange (+X).  A negative vx means the blob
+        # order was reversed in BOTH cameras (the detector's principal-axis
+        # sign is arbitrary when no reference pixel is given): time-reverse
+        # the track and refit.
+        track = Track3D(times=track.times,
+                        points=track.points[::-1].copy(),
+                        reproj_err_px=track.reproj_err_px[::-1].copy())
+        fit = fit_launch_velocity(track)
     launch = launch_from_velocity(fit, club_speed_ms=club_speed_ms)
 
     if spin is None:

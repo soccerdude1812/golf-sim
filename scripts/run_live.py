@@ -37,6 +37,10 @@ def main():
                     help="calibrated rig JSON (omit to use default geometry)")
     ap.add_argument("--trigger", choices=["sound", "motion", "manual"],
                     default="manual")
+    ap.add_argument("--strobe", choices=["pico", "pi"], default="pico",
+                    help="'pico' (recommended): the Pico firmware fires "
+                         "shutters+strobe autonomously on impact; 'pi': drive "
+                         "the strobe from this Pi's GPIO (bench fallback)")
     ap.add_argument("--club", default="driver")
     ap.add_argument("--shots", type=int, default=0, help="0 = run forever")
     args = ap.parse_args()
@@ -47,6 +51,12 @@ def main():
     if Path(args.rig).exists():
         cam_a, cam_b, strobe_dt = load_rig(args.rig)
         print(f"Loaded calibrated rig from {args.rig}")
+        if np.allclose(cam_a.R, np.eye(3)) and np.allclose(cam_a.t, 0.0):
+            print("  ! WARNING: this rig is NOT world-anchored (camera A is "
+                  "the origin).\n"
+                  "  ! Speeds are correct but launch/azimuth angles are in "
+                  "camera-A coordinates.\n"
+                  "  ! Do the anchoring step in docs/CALIBRATION.md step 4.")
     else:
         cfg = RigConfig()
         cam_a, cam_b = cfg.geometry.cameras()
@@ -54,7 +64,11 @@ def main():
         print("No rig file; using verified DEFAULT geometry (calibrate for "
               "best absolute accuracy)")
 
-    strobe = StrobeController(pulses=5, interval_us=strobe_dt * 1e6)
+    # With --strobe pico the Pico fires shutters + strobe on its own impact
+    # trigger (pico/strobe_controller.py); the Pi only collects frames.  The
+    # cameras must be in external-trigger mode (see docs/BUILD.md bring-up).
+    strobe = (StrobeController(pulses=5, interval_us=strobe_dt * 1e6)
+              if args.strobe == "pi" else None)
     backend_a = Picamera2Backend(camera_num=0, exposure_us=int(5 * strobe_dt * 1e6))
     backend_b = Picamera2Backend(camera_num=1, exposure_us=int(5 * strobe_dt * 1e6))
     det = BallDetector(min_radius_px=3, max_radius_px=150)
@@ -63,12 +77,15 @@ def main():
     try:
         while args.shots == 0 or shot_no < args.shots:
             _wait_for_trigger(args.trigger, backend_a)
-            strobe.fire()
+            if strobe is not None:
+                strobe.fire()
             frame_a = backend_a.read()
             frame_b = backend_b.read()
 
-            blobs_a = det.detect_ordered(frame_a)
-            blobs_b = det.detect_ordered(frame_b)
+            blobs_a = det.detect_ordered(
+                frame_a, reference_uv=cam_a.project([[0.0, 0.0, 0.0]])[0])
+            blobs_b = det.detect_ordered(
+                frame_b, reference_uv=cam_b.project([[0.0, 0.0, 0.0]])[0])
             if len(blobs_a) < 3 or len(blobs_a) != len(blobs_b):
                 print(f"  miss: {len(blobs_a)}/{len(blobs_b)} blobs; retrying")
                 continue

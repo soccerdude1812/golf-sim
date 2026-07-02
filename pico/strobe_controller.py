@@ -32,7 +32,8 @@ INTERVAL_US = 1300       # spacing between flashes
 PULSE_US = 12            # flash on-time (sets motion blur; keep small)
 
 # Delay from strike detection to the first flash, so the ball has left the
-# club face and is in clear air (~0.1-0.15 m out).  Tune on the bench.
+# club face and is in clear air (~0.05 m out at wedge speed, ~0.12 m at tour
+# driver speed).  Tune on the bench.
 LAUNCH_DELAY_US = 1500
 
 # Exposure window = a little padding around the whole strobe train.
@@ -49,15 +50,24 @@ status = Pin(25, Pin.OUT, value=0)
 
 
 def fire_sequence():
-    """One shot: open both shutters and fire the strobe train."""
+    """One shot: open both shutters and fire the strobe train.
+
+    The XTR low time (= sensor exposure) is exactly EXPOSURE_US: launch
+    delay + 4 full intervals + the last 12 us pulse + the padding.  No
+    trailing full-interval sleep after the final flash -- that would
+    silently stretch the exposure (and the ambient-light integration) by
+    another ~1.3 ms beyond the printed figure.
+    """
     status.on()
     xtr.low()                         # both cameras begin exposing
     time.sleep_us(LAUNCH_DELAY_US)    # let the ball get clear of the club
-    for _ in range(PULSES):
+    for k in range(PULSES):
         strobe.high()
         time.sleep_us(PULSE_US)
         strobe.low()
-        time.sleep_us(INTERVAL_US - PULSE_US)
+        if k < PULSES - 1:
+            time.sleep_us(INTERVAL_US - PULSE_US)
+    time.sleep_us(EXPOSURE_PAD_US)
     xtr.high()                        # end exposure -> cameras read out
     status.off()
 

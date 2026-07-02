@@ -11,11 +11,19 @@ Forces
     F_magnus=  0.5 * rho * Cl * A * |v|^2 * (w_hat x v_hat)
     F_grav  =  (0, 0, -m g)
 
-Cd and Cl are functions of the spin ratio S = r*omega / |v|.  The functional
-forms are smooth empirical fits; the three tuning constants are calibrated so
-that standard driver launch conditions reproduce the carry distances reported
-by commercial launch monitors (see tests/test_flight_model.py).  They can be
-re-fit against your own measured data.
+Cl is a function of the spin ratio S = r*omega / |v|; Cd depends on both S
+and (through a Reynolds-number proxy) on speed -- a golf ball past the drag
+crisis has lower Cd at driver speed than at wedge speed.  The functional
+forms are smooth empirical fits; the five tuning constants are calibrated
+against the Trackman PGA/LPGA tour-average table (carry, apex height AND
+descent angle simultaneously -- see tests/test_real_data_validation.py).
+They can be re-fit against your own measured data.
+
+Coordinate convention: world frame is right-handed with X down the target
+line and Z up, so +Y points LEFT of the target line.  All user-facing signed
+quantities (azimuth_deg, side_spin_rpm, offline_m) follow the golf/launch-
+monitor convention "positive = right of the target line"; the mapping to the
+world frame (a minus sign on Y) happens inside this module.
 """
 
 from __future__ import annotations
@@ -29,17 +37,23 @@ from .constants import (
     RAD_PER_DEG, YARDS_PER_M, rads_from_rpm,
 )
 
-# Empirical aerodynamic coefficient model -- calibrated against published
-# driver carry tables (see tests).  Golf balls operate past the drag crisis,
-# so Cd is fairly flat; Cl saturates with spin (Magnus force).
-_CD0 = 0.215          # base drag coefficient
-_CD_SPIN = 0.200      # extra drag induced by spin
-_CL_GAIN = 0.280      # lift gain
-_CL_HALF = 0.060      # spin ratio at half-max lift
+# Empirical aerodynamic coefficient model -- least-squares fit to the
+# Trackman PGA/LPGA tour-average table (carry + apex + descent angle for 14
+# clubs, tests/test_real_data_validation.py).  Golf balls operate past the
+# drag crisis, where Cd falls slowly with Reynolds number (speed) and rises
+# with spin; Cl saturates with spin (Magnus force).
+_CD0 = 0.0673         # base drag coefficient
+_CD_SPIN = 0.1314     # extra drag induced by spin (spin ratio S)
+_CD_RE = 0.1887       # Reynolds-proxy term: scales with (_V_REF / speed)
+_V_REF = 40.0         # m/s reference speed for the Reynolds proxy
+_CD_MAX = 0.50        # cap (sub-critical Cd); keeps slow chips physical
+_CL_GAIN = 0.4360     # lift gain
+_CL_HALF = 0.1793     # spin ratio at half-max lift
 
 
-def drag_coefficient(spin_ratio: float) -> float:
-    return _CD0 + _CD_SPIN * spin_ratio
+def drag_coefficient(spin_ratio: float, speed_ms: float = _V_REF) -> float:
+    cd = _CD0 + _CD_SPIN * spin_ratio + _CD_RE * (_V_REF / max(speed_ms, 1.0))
+    return min(cd, _CD_MAX)
 
 
 def lift_coefficient(spin_ratio: float) -> float:
@@ -54,14 +68,16 @@ class LaunchConditions:
     launch_angle_deg: float        # vertical, above horizontal
     azimuth_deg: float = 0.0       # +right (push), -left (pull) of target line
     back_spin_rpm: float = 2500.0
-    side_spin_rpm: float = 0.0     # +right-tilt spin curves ball to the right
+    side_spin_rpm: float = 0.0     # + curves ball right (fade/slice), - left
 
     def velocity_vector(self) -> np.ndarray:
+        """World-frame velocity.  +Y points LEFT of the target line (right-
+        handed frame), so a positive (rightward) azimuth maps to -Y."""
         el = self.launch_angle_deg * RAD_PER_DEG
         az = self.azimuth_deg * RAD_PER_DEG
         v = self.ball_speed_ms
         vx = v * np.cos(el) * np.cos(az)
-        vy = v * np.cos(el) * np.sin(az)
+        vy = -v * np.cos(el) * np.sin(az)
         vz = v * np.sin(el)
         return np.array([vx, vy, vz])
 
@@ -69,13 +85,13 @@ class LaunchConditions:
         """Spin angular-velocity vector (rad/s) in the world frame.
 
         Pure backspin lifts the ball: the spin axis points along -Y so that
-        (w x v) has a +Z (upward) component for a ball travelling +X.  Side
-        spin tilts the axis about X.
+        (w x v) has a +Z (upward) component for a ball travelling +X.
+        Positive side spin (fade) tilts the axis toward -Z: the Magnus force
+        (-Z x +X = -Y) then pushes the ball right of the target line.
         """
         back = rads_from_rpm(self.back_spin_rpm)
         side = rads_from_rpm(self.side_spin_rpm)
-        # backspin -> axis along -Y ; sidespin -> axis along +Z component
-        return np.array([0.0, -back, side])
+        return np.array([0.0, -back, -side])
 
 
 @dataclass
@@ -113,7 +129,7 @@ def _accel(v: np.ndarray, omega: np.ndarray) -> np.ndarray:
     spin_mag = np.linalg.norm(omega)
     spin_ratio = (BALL_RADIUS_M * spin_mag) / speed if spin_mag > 0 else 0.0
 
-    cd = drag_coefficient(spin_ratio)
+    cd = drag_coefficient(spin_ratio, speed)
     cl = lift_coefficient(spin_ratio)
 
     q = 0.5 * AIR_DENSITY_KGM3 * BALL_AREA_M2   # dynamic-pressure prefactor
@@ -178,7 +194,7 @@ def simulate(launch: LaunchConditions, dt: float = 0.002,
             v_land = prev_v + frac * (v - prev_v)
             traj[-1] = ground
             carry = float(ground[0])
-            offline = float(ground[1])
+            offline = float(-ground[1])       # world +Y is left; report +right
             land_speed = float(np.linalg.norm(v_land))
             horiz = float(np.hypot(v_land[0], v_land[1]))
             descent = float(np.degrees(np.arctan2(-v_land[2], horiz)))
@@ -194,6 +210,6 @@ def simulate(launch: LaunchConditions, dt: float = 0.002,
     return FlightResult(
         carry_m=float(p[0]), total_m=float(p[0]), apex_m=apex,
         flight_time_s=t, descent_angle_deg=0.0,
-        landing_speed_ms=float(np.linalg.norm(v)), offline_m=float(p[1]),
+        landing_speed_ms=float(np.linalg.norm(v)), offline_m=float(-p[1]),
         trajectory=np.array(traj),
     )

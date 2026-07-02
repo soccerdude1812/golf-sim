@@ -2,7 +2,10 @@
 
 This is the single source of truth that ties the physical build to the code.
 Distances are metres, angles degrees, in the world frame defined in
-``geometry`` (X down the target line, Y lateral, Z up; origin at the ball).
+``geometry`` (X down the target line, Z up, Y = Z x X pointing LEFT of the
+target line -- the golfer's side for a right-hander; origin at the ball).
+Both default cameras therefore sit at negative Y, across the ball from the
+golfer.
 """
 
 from __future__ import annotations
@@ -61,11 +64,13 @@ class RigGeometry:
     ))
     # BEHIND-HIGH (down-the-line-ish) camera: behind the golfer, mounted HIGH
     # (~1.85 m, above the top of the backswing -- a camera here at chest height
-    # would be in the path of the club) and offset ~40 deg off the flight line.
-    # A *pure* down-the-line camera fails (the ball recedes from it and the
-    # strobe images merge -- see docs/CAMERA_PLACEMENT.md); the quarter angle
-    # keeps the pulses separated while still framing the swing and resolving
-    # push/pull.  Mount on a tall stand, shelf, or ceiling/wall bracket.
+    # would be in the path of the club) and offset off the flight line (~27 deg
+    # in plan view, ~58 deg in 3-D including the height; true distance to the
+    # corridor ~2.2 m).  A *pure* down-the-line camera fails (the ball recedes
+    # from it and the strobe images merge -- see docs/CAMERA_PLACEMENT.md); the
+    # offset angle keeps the pulses separated while still framing the swing and
+    # resolving push/pull.  Mount on a tall stand, shelf, or ceiling/wall
+    # bracket.
     down_the_line: CameraPlacement = field(default_factory=lambda: CameraPlacement(
         name="BehindHigh",
         center_m=(-1.0, -0.6, 1.85),

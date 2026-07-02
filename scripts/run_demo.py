@@ -52,8 +52,11 @@ def main():
                          noise_sigma=args.noise, false_blobs=3, seed=args.seed)
 
     det = BallDetector(min_radius_px=3, max_radius_px=150, thresh=90)
-    blobs_a = det.detect_ordered(shot.frames_a[0])
-    blobs_b = det.detect_ordered(shot.frames_b[0])
+    # order strobe images by distance from the projected tee position
+    tee_a = cam_a.project([[0.0, 0.0, 0.0]])[0]
+    tee_b = cam_b.project([[0.0, 0.0, 0.0]])[0]
+    blobs_a = det.detect_ordered(shot.frames_a[0], reference_uv=tee_a)
+    blobs_b = det.detect_ordered(shot.frames_b[0], reference_uv=tee_b)
     print(f"Detected {len(blobs_a)} / {len(blobs_b)} strobe images "
           f"(face-on / behind-high)")
     if len(blobs_a) != len(blobs_b):

@@ -38,7 +38,8 @@ def launch_from_velocity(fit: VelocityFit,
     horiz = float(np.hypot(vx, vy))
 
     launch_angle = np.degrees(np.arctan2(vz, horiz))
-    azimuth = np.degrees(np.arctan2(vy, vx))
+    # world +Y is left of the target line; report golf convention (+ = right)
+    azimuth = np.degrees(np.arctan2(-vy, vx))
 
     smash = None
     if club_speed_ms and club_speed_ms > 0:

@@ -128,7 +128,8 @@ class BallDetector:
         return blobs
 
     def detect_ordered(self, frame: np.ndarray, size_ratio: float = 0.4,
-                       line_tol_px: float | None = None) -> list[Blob]:
+                       line_tol_px: float | None = None,
+                       reference_uv=None) -> list[Blob]:
         """Detect blobs, reject spurious ones, and order the surviving ball
         images along their direction of travel.
 
@@ -139,6 +140,14 @@ class BallDetector:
           2. *collinearity* -- the ball flies in a near-straight line, so its
              strobe images are collinear in the image.  A RANSAC line keeps the
              largest collinear inlier set and discards off-line blobs.
+
+        ``reference_uv`` should be the projected tee/ball-at-rest pixel (from
+        the calibrated camera: ``cam.project([[0,0,0]])[0]``).  The ball flies
+        AWAY from the tee, so ordering by distance from it gives an
+        unambiguous time order.  Without it we fall back to ordering along
+        the principal axis, whose direction (sign) is arbitrary -- the
+        pipeline then relies on its flies-downrange check to fix a reversed
+        track.
         """
         blobs = self.detect(frame)
         if len(blobs) <= 1:
@@ -147,10 +156,14 @@ class BallDetector:
         if len(blobs) >= 3:
             blobs = self._ransac_line(blobs, line_tol_px)
         pts = np.array([b.uv for b in blobs])
-        centred = pts - pts.mean(axis=0)
-        _, _, vt = np.linalg.svd(centred, full_matrices=False)
-        axis = vt[0]
-        order = np.argsort(centred @ axis)
+        if reference_uv is not None:
+            ref = np.asarray(reference_uv, float)
+            order = np.argsort(np.linalg.norm(pts - ref, axis=1))
+        else:
+            centred = pts - pts.mean(axis=0)
+            _, _, vt = np.linalg.svd(centred, full_matrices=False)
+            axis = vt[0]
+            order = np.argsort(centred @ axis)
         return [blobs[i] for i in order]
 
     @staticmethod

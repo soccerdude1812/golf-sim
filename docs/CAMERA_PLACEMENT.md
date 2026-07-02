@@ -8,7 +8,11 @@ the fix, and gives the exact, code‑verified positions.
 All coordinates use the project world frame (metres):
 
 - **X** — down the target line (direction the ball is hit)
-- **Y** — lateral (＋ to the golfer's right)
+- **Y** — lateral; the frame is right‑handed (Y = Z × X), so **+Y points
+  LEFT of the target line** — the side a right‑handed golfer stands on. Both
+  cameras below sit at *negative* Y, across the ball from the golfer.
+  (User‑facing outputs — azimuth, side spin, offline — still follow the golf
+  convention "positive = right"; the code flips the sign internally.)
 - **Z** — up
 - **origin** — the ball at rest on the mat
 
@@ -19,14 +23,16 @@ flying almost **directly away from it**. The five strobe images of the ball
 then land almost on top of each other in the image — they *merge into one
 blob*, and you can't measure how far the ball moved.
 
-This isn't hand‑waving; it's measured. With the recommended lens at ~1 m, a
-160 mph ball gives a minimum separation between consecutive strobe images of:
+This isn't hand‑waving; it's computed from the actual code geometry (6 mm
+lens, 160 mph ball, 1300 µs strobe interval; camera positions as below, the
+down‑the‑line camera at (−1.0, 0, 0.3)). Minimum separation between
+consecutive strobe images vs the ball's image size:
 
-| camera aim | min. separation | ball diameter | result |
-|------------|----------------:|--------------:|--------|
-| pure down‑the‑line | **21 px** | 42 px | **images merge — unusable** |
-| 40° "quarter" angle behind‑high | 49 px | 38 px | separated ✓ |
-| broadside (face‑on side) | 64 px | 44 px | separated ✓ |
+| camera aim | min. separation | ball diameter | camera→ball | result |
+|------------|----------------:|--------------:|------------:|--------|
+| pure down‑the‑line | **45 px** | 61 px | 1.2 m | **images overlap — unusable** |
+| behind‑high, angled (default) | 65 px | 33 px | 2.2 m | separated ✓ |
+| broadside face‑on (default) | 126 px | 58 px | 1.3 m | separated ✓ |
 
 The governing quantity is **(ball speed × strobe interval) ÷ ball diameter**
 *projected onto the camera*. Looking down the flight line collapses that
@@ -50,17 +56,21 @@ center ≈ (0.20, −1.25, 0.28) m     aim at (0.20, 0.0, 0.06) m
 
 ### Camera B — BEHIND‑HIGH (down‑the‑line‑ish), the second stereo view
 Behind the golfer and **mounted high — above the top of the backswing**, offset
-to the side so its optical axis sits ~40° off the flight line. The height is a
-safety requirement, not just an optical one: a camera behind the golfer at chest
-height sits exactly where the club travels at the top of the backswing. It still
-frames the swing and resolves **launch direction (push/pull)** while keeping the
-strobe images separated enough to triangulate.
+to the side so its optical axis sits well off the flight line (~27° in plan
+view; ~58° in 3‑D once the height is included). The height is a safety
+requirement, not just an optical one: a camera behind the golfer at chest
+height sits exactly where the club travels at the top of the backswing. It
+still frames the swing and resolves **launch direction (push/pull)** while
+keeping the strobe images separated enough to triangulate.
 
 ```
 center ≈ (−1.0, −0.6, 1.85) m    aim at (0.20, 0.0, 0.06) m
 ```
-(1 m behind, 0.6 m to the side, ~1.85 m high — on a tall stand or wall/ceiling
-bracket — looking down toward the ball.)
+(1 m behind, 0.6 m to the side, ~1.85 m high — a true 3‑D distance of ~2.2 m
+from the corridor — on a tall stand or wall/ceiling bracket, looking down
+toward the ball. At 2.2 m the ball is ~33 px across: less resolution than the
+face‑on camera, but far above the ≥6 px detection floor, and this camera only
+needs to localise the blob centroid, not resolve spin.)
 
 These are the defaults in `golfsim/config.py` and are the geometry every test
 runs against. The angle between the two optical axes at the corridor is **66°**
@@ -72,7 +82,7 @@ near‑parallel geometry that would amplify pixel noise into 3‑D error).
                               net
    golfer ────●──────────────────────  ║
             (ball)   ↘ launch corridor  ║
-                       ┊  (first ~0.3 m measured)
+                       ┊  (first ~0.5 m measured)
         B ╲            ┊
    behind‑high ╲       ┊
                 ╲      ┊
@@ -95,9 +105,12 @@ measures the ball.
 
 1. Both cameras must see the **first ~0.3–0.5 m of flight** in front of the
    tee (the strobe burst happens here, before the net).
-2. Keep both **roughly 1.0–1.4 m** from the corridor with the 6 mm lens so the
-   ball is ~40–75 px across and all 5 flashes stay in frame (verified for
-   95–183 mph in `tests/test_pipeline_synthetic.py` and the feasibility tool).
+2. Keep the **face‑on camera roughly 1.0–1.4 m** from the corridor with the
+   6 mm lens so the ball is ~50–75 px across (it's the primary measurement
+   camera). The behind‑high camera can sit farther — the default is ~2.2 m,
+   giving a ~33 px ball, still ample for centroiding. All 5 flashes staying
+   in frame is verified for 95–183 mph in `tests/test_pipeline_synthetic.py`
+   and the feasibility tool.
 3. Mount them **rigidly** — any shift after calibration directly biases 3‑D
    positions. Tripods are fine if they don't get bumped between sessions.
 4. Aim both at the **same point** (`corridor_center`). The further the two

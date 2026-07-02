@@ -1,13 +1,13 @@
 # golfsim — a two‑camera DIY golf launch monitor & simulator
 
 `golfsim` turns **two sub‑$60 cameras and an IR strobe** into a working golf
-launch monitor. A calibrated stereo pair watches the first ~0.3 m of ball
+launch monitor. A calibrated stereo pair watches the first ~0.5 m of ball
 flight, measures the ball's initial 3‑D velocity, and an aerodynamic model
 turns that launch (plus spin) into the full stat sheet: **ball speed, launch
 angle, launch direction, spin, smash factor, carry, total, apex, descent
 angle, flight time and offline**.
 
-The whole rig costs **≈ $380** (full bill of materials in
+The whole rig costs **≈ $360** (full bill of materials in
 [`docs/HARDWARE.md`](docs/HARDWARE.md)) — comfortably under the $500 budget,
 using a maximum of two cameras.
 
@@ -32,7 +32,7 @@ pipeline and compares:
 
 ```
 $ python scripts/run_demo.py --ball-speed 167 --launch 11 --azimuth 1 --spin 2700
-Rig: stereo angle 63 deg, strobe 5 pulses @ 1300 us
+Rig: stereo angle 66 deg, strobe 5 pulses @ 1300 us
 Detected 5 / 5 strobe images (face-on / behind-high)
 
 ================  SHOT  ================
@@ -40,25 +40,26 @@ Detected 5 / 5 strobe images (face-on / behind-high)
  Launch angle   :   11.0 deg
  Launch dir     :    1.0 deg R
  Back spin      :   2643 rpm  (estimated)
- Carry          :  270.6 yd
- Apex           :   78.5 ft
- Descent angle  :   38.x deg
+ Carry          :  267.1 yd
+ Apex           :   99.4 ft
+ Descent angle  :   42.2 deg
  ...
- recovered ball-speed error: 0.01 mph (0.00%)
+ recovered ball-speed error: 0.00 mph (0.00%)
 ```
 
 ```
 $ python -m pytest -q
-28 passed
+51 passed
 ```
 
 - **Ball speed / launch angle / direction**: recovered to <1 mph / <0.5° even
   with image noise and spurious reflections (`tests/test_pipeline_synthetic.py`).
 - **Flight model vs REAL data**: validated against 14 Trackman PGA/LPGA Tour
-  average rows (real measured swings). Predicted carry tracks *measured* carry
-  with **~4 yd mean error (~2%)** across the whole bag — and **12 of the 14
-  clubs are out-of-sample** (only Driver and 7-iron were used to tune the
-  model). See `scripts/validate_real_data.py` / `tests/test_real_data_validation.py`.
+  average rows (real measured swings) on **carry, apex height and descent
+  angle simultaneously**: ~4 yd / ~1 yd / ~2° mean error across the whole bag.
+  A hold-out cross-check (refit on half the bag, predict the other half)
+  confirmed the aero model generalises out-of-sample. See
+  `scripts/validate_real_data.py` / `tests/test_real_data_validation.py`.
 - **Tracking feasibility**: the recommended rig passes at every golf speed; a
   1080p60 webcam provably fails (`tests/test_feasibility.py`).
 
@@ -114,7 +115,8 @@ The measurement method, timing budget and error analysis are in
 golfsim/     core library (importable, fully tested)
 scripts/     run_demo, feasibility_report, validate_real_data, calibrate, run_live
 pico/        Raspberry Pi Pico firmware (shutter + strobe timing sequencer)
-tests/       45 tests: geometry, flight model, feasibility, full pipeline, real data
+tests/       51 tests: geometry, flight model, conventions, feasibility, full
+             pipeline, real data
 docs/        BUILD, HARDWARE, CAMERA_PLACEMENT, THEORY, CALIBRATION, FEASIBILITY,
              system_diagram.png
 ```

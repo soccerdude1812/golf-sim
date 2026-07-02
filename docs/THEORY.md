@@ -71,9 +71,9 @@ Verified end‑to‑end in `tests/test_pipeline_synthetic.py`: rendering realist
 frames (noise + spurious blobs) and recovering 160–167 mph shots to **<1 mph,
 <0.5°**, with mean reprojection error <1.5 px.
 
-Why the velocity is accurate: over 5 ms the ball decelerates only ~0.4 m/s out
-of ~70 (drag ≈ 22 m/s² ≈ 2.3 g at launch). The quadratic fit models that
-deceleration explicitly and reports the value *at t₀*, so it isn't a bias.
+Why the velocity is accurate: over the ~5 ms window the ball decelerates only
+~0.1 m/s out of ~75 (drag ≈ 19 m/s² ≈ 2 g at launch). The quadratic fit models
+that deceleration explicitly and reports the value *at t₀*, so it isn't a bias.
 
 ## 4. Launch parameters (`launch.py`)
 
@@ -81,7 +81,9 @@ From `v₀ = (vx, vy, vz)` in the world frame:
 
 - **ball speed** = ‖v₀‖
 - **launch angle** (vertical) = atan2(vz, √(vx²+vy²))
-- **launch direction** (push/pull) = atan2(vy, vx)
+- **launch direction** (push/pull) = atan2(−vy, vx) — the world frame is
+  right‑handed (X downrange, Z up) so +Y points *left* of the target line;
+  the sign flip reports the golf convention **positive = right**
 - **smash factor** = ball speed ÷ clubhead speed *(if clubhead speed is
   measured from the face‑on camera before impact)*
 
@@ -111,22 +113,28 @@ F = −½ρ Cd A |v| v        (drag)
 ```
 
 with the conforming‑ball constants (45.93 g, 42.67 mm) and air density
-1.225 kg/m³. `Cd` and `Cl` are smooth functions of the spin ratio `S = rω/|v|`;
-their three tuning constants are fit so standard launches reproduce published
-carry tables. Spin decays exponentially in flight. Outputs: carry, total
-(optional roll), apex, descent angle, flight time, landing speed, offline.
+1.225 kg/m³. `Cl` is a smooth saturating function of the spin ratio
+`S = rω/|v|`; `Cd` rises with spin and falls with speed (a Reynolds‑number
+proxy — a golf ball past the drag crisis has lower Cd at driver speed than at
+wedge speed). The five tuning constants are least‑squares fit to the Trackman
+tour‑average table on **carry, apex height and descent angle simultaneously**
+(a carry‑only fit can still fly the wrong *shape*). Spin decays exponentially
+in flight. Outputs: carry, total (optional roll), apex, descent angle, flight
+time, landing speed, offline.
 
-Validated in `tests/test_flight_model.py`:
+Validated against all 14 Trackman PGA/LPGA tour‑average rows in
+`tests/test_real_data_validation.py` (run `scripts/validate_real_data.py` for
+the full table):
 
-| shot | ball / launch / spin | model carry | reference |
-|------|----------------------|------------:|----------:|
-| amateur driver | 147 mph / 14° / 2700 | 243 yd | ~228 |
-| tour driver | 167 mph / 10.9° / 2686 | 277 yd | ~272 |
-| long driver | 183 mph / 10° / 2200 | 302 yd | ~305 |
-| 7‑iron | 120 mph / 16.3° / 7000 | 179 yd | ~172 |
+| metric | mean abs. error | worst club |
+|--------|----------------:|-----------:|
+| carry | 4.1 yd (~2 %) | 7.8 yd |
+| apex height | 1.1 yd | 2.4 yd |
+| descent angle | 2.1° | 4.6° |
 
-within the test tolerance and well within real shot‑to‑shot spread. Descent
-angles (38–41°) and apex heights (90–110 ft) match driver norms.
+A hold‑out cross‑check during tuning (refit on half the bag, predict the other
+half) gave 4.3 yd carry MAE out‑of‑sample, so the form generalises rather than
+memorises. Driver descent (~40–42°) and apex (~95–100 ft) match tour norms.
 
 ## 7. End‑to‑end error budget
 

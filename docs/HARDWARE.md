@@ -1,4 +1,4 @@
-# Hardware — bill of materials (≈ $370, two cameras, < $500)
+# Hardware — bill of materials (≈ $363, two cameras, < $500)
 
 > For the **definitive, buy-this shopping list + wiring + step-by-step bring-up**,
 > see [`BUILD.md`](BUILD.md). This page is the rationale behind the part choices.
@@ -64,7 +64,7 @@ one‑Pi‑per‑camera split for extra capture headroom.
 
 ### Already assumed present (not counted)
 - **Hitting net** to stop the ball (you stated you have one). The launch is
-  measured in the first ~0.3 m, *before* the net, so the net never occludes
+  measured in the first ~0.5 m, *before* the net, so the net never occludes
   the measurement.
 - **Hitting mat** and **balls**. For optical spin measurement use **marked
   range balls** (a clear logo or a drawn line) — see
