@@ -7,10 +7,11 @@ require the predicted carry, apex height AND descent angle to track the
 still fly the wrong shape (too flat / too ballooned).
 
 The five aero constants were least-squares fit to all 14 rows (carry + apex +
-descent simultaneously).  Generalisation was verified during tuning with a
-7-club hold-out refit: fitting on half the bag predicted the held-out half
-with 4.3 yd carry / 0.9 yd apex / 2.5 deg descent MAE -- i.e. the functional
-form captures the physics rather than memorising the table.
+descent simultaneously).  Generalisation is verified by a reproducible
+hold-out refit (``scripts/fit_aero.py --holdout``): fitting with 6 clubs held
+out predicts them with 4.0 yd carry / 1.0 yd apex / 1.5 deg descent MAE --
+i.e. the functional form captures the physics rather than memorising the
+table.
 """
 import pytest
 

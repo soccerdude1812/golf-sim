@@ -36,6 +36,9 @@ def main():
     ap.add_argument("--noise", type=float, default=2.0, help="image noise sigma")
     ap.add_argument("--measure-spin", action="store_true",
                     help="feed true spin to the pipeline (else it is estimated)")
+    ap.add_argument("--plot", metavar="PNG",
+                    help="save a side/top trajectory drawing (truth vs "
+                         "recovered) to this file; requires matplotlib")
     ap.add_argument("--seed", type=int, default=7)
     args = ap.parse_args()
 
@@ -78,6 +81,55 @@ def main():
     err = abs(res.stats.ball_speed_mph - args.ball_speed)
     print(f" recovered ball-speed error: {err:.2f} mph "
           f"({100*err/args.ball_speed:.2f}%)")
+
+    if args.plot:
+        from golfsim.flight_model import simulate
+        _plot_trajectories(simulate(truth), res, args.plot)
+
+
+def _plot_trajectories(truth_flight, res, out_path):
+    """Side + top view of the simulated flight: ground truth launch vs the
+    flight simulated from the RECOVERED launch parameters, plus the measured
+    strobe track.  World +Y is left of the target line, so the top view plots
+    -Y ("offline right") upward to match the stat sheet's R/L convention."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    from golfsim.constants import YARDS_PER_M
+    from golfsim.flight_model import simulate
+
+    t_traj = truth_flight.trajectory * YARDS_PER_M
+    # re-simulate from the recovered launch for the drawn comparison
+    rec = simulate(LaunchConditions(
+        ball_speed_ms=res.launch.ball_speed_ms,
+        launch_angle_deg=res.launch.launch_angle_deg,
+        azimuth_deg=res.launch.azimuth_deg,
+        back_spin_rpm=res.stats.back_spin_rpm,
+        side_spin_rpm=res.stats.side_spin_rpm))
+    r_traj = rec.trajectory * YARDS_PER_M
+
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 7), sharex=True)
+    ax1.plot(t_traj[:, 0], t_traj[:, 2] * 3, label="ground truth", lw=2)
+    ax1.plot(r_traj[:, 0], r_traj[:, 2] * 3, "--", label="recovered", lw=2)
+    ax1.set_ylabel("height (ft)")
+    ax1.set_title(f"side view — carry {rec.carry_yards:.0f} yd, "
+                  f"apex {rec.apex_m*3.2808:.0f} ft, "
+                  f"descent {rec.descent_angle_deg:.0f}°")
+    ax1.legend(); ax1.grid(alpha=0.3)
+
+    ax2.plot(t_traj[:, 0], -t_traj[:, 1], label="ground truth", lw=2)
+    ax2.plot(r_traj[:, 0], -r_traj[:, 1], "--", label="recovered", lw=2)
+    ax2.axhline(0, color="#888", lw=0.8, ls=":")
+    ax2.set_xlabel("carry (yd)")
+    ax2.set_ylabel("offline (yd, + = right)")
+    ax2.set_title(f"top view — offline {rec.offline_yards:+.1f} yd "
+                  f"({'R' if rec.offline_yards >= 0 else 'L'})")
+    ax2.legend(); ax2.grid(alpha=0.3)
+
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=120)
+    print(f"\ntrajectory drawing -> {out_path}")
 
 
 if __name__ == "__main__":

@@ -8,11 +8,11 @@ conditions (ball speed, launch angle, spin) into our model and compare its
 predicted flight to the measurements.
 
 IMPORTANT honesty note: the model's 5 aerodynamic constants were least-squares
-fit to ALL of these rows (carry + apex + descent together).  Generalisation
-was verified separately during tuning: refitting on only half the bag
-predicted the held-out half with 4.3 yd carry / 0.9 yd apex / 2.5 deg descent
-MAE, so the functional form captures the physics rather than memorising the
-table.  The matching regression gate lives in
+fit to ALL of these rows (carry + apex + descent together).  Generalisation is
+verified by a reproducible hold-out refit (scripts/fit_aero.py --holdout):
+fitting with 6 clubs held out predicts them with 4.0 yd carry / 1.0 yd apex /
+1.5 deg descent MAE, so the functional form captures the physics rather than
+memorising the table.  The matching regression gate lives in
 tests/test_real_data_validation.py.
 
 Sources:

@@ -69,7 +69,10 @@ $ python -m pytest -q
 pip install -r requirements.txt
 python -m pytest -q                 # run the verification suite
 python scripts/run_demo.py          # synthetic shot through the full pipeline
+python scripts/run_demo.py --azimuth -2 --side-spin 800 --plot shot.png
+                                    # ...with a side/top trajectory drawing
 python scripts/feasibility_report.py# the "can the cameras track it?" numbers
+python scripts/validate_real_data.py# flight model vs Trackman tour data
 ```
 
 ## On the real rig
@@ -113,7 +116,8 @@ The measurement method, timing budget and error analysis are in
 
 ```
 golfsim/     core library (importable, fully tested)
-scripts/     run_demo, feasibility_report, validate_real_data, calibrate, run_live
+scripts/     run_demo, feasibility_report, validate_real_data, fit_aero,
+             calibrate, run_live
 pico/        Raspberry Pi Pico firmware (shutter + strobe timing sequencer)
 tests/       51 tests: geometry, flight model, conventions, feasibility, full
              pipeline, real data

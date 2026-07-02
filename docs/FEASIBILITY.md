@@ -10,7 +10,9 @@ python scripts/feasibility_report.py
 
 ## Recommended rig — Pi Global Shutter + 6 mm lens + 5‑pulse IR strobe
 
-`HFOV 45° · ground sampling 0.72 mm/px · 5 pulses/frame · cameras ~1.25 m out`
+`HFOV 45° · ground sampling 0.72 mm/px · 5 pulses/frame · face‑on camera
+~1.25 m out (the behind‑high camera sits ~2.2 m and sees a ~33 px ball —
+still far above the 6 px floor)`
 
 | ball speed | samples | travel/pulse | motion blur | ball Ø | speed res. | verdict |
 |-----------:|--------:|-------------:|------------:|-------:|-----------:|---------|
@@ -30,11 +32,11 @@ so it's detectable. Speed resolution stays well under 0.2 %.
 
 | ball speed | samples | travel/frame | motion blur | verdict |
 |-----------:|--------:|-------------:|------------:|---------|
-| 95 mph | 2.6 | 74 cm / 925 px | 222 px | **NOT FEASIBLE** |
-| 167 mph | 2.0 | 124 cm / 1545 px | 371 px | **NOT FEASIBLE** |
+| 95 mph | 1.8 | 71 cm / 703 px | 169 px | **NOT FEASIBLE** |
+| 167 mph | 1.5 | 124 cm / 1236 px | 297 px | **NOT FEASIBLE** |
 
 It fails on two independent counts: too few samples (the ball clears the zone
-in ~one frame) and catastrophic motion blur (the ball is a 20–30 cm streak).
+in ~one frame) and catastrophic motion blur (the ball is a 17–30 cm streak).
 No amount of clever software recovers a velocity from this. This is exactly why
 the build spends its money on a **global shutter + strobe**, not on a
 higher‑megapixel webcam.

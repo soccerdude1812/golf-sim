@@ -30,7 +30,8 @@ flash *k* in camera B. That shared timing is the whole trick for pairing.
 ## 2. Optics & timing budget (the verification)
 
 With the Pi Global Shutter camera (3.45 µm pixels, 1456×1088), a 6 mm lens
-(45° HFOV), cameras ~1.25 m from the ball, and a 5‑pulse / 1.3 ms strobe:
+(45° HFOV), the face‑on camera ~1.25 m from the ball (the behind‑high camera
+sits ~2.2 m out), and a 5‑pulse / 1.3 ms strobe:
 
 | quantity | formula | value @167 mph | requirement | result |
 |----------|---------|---------------:|-------------|--------|
@@ -43,7 +44,7 @@ With the Pi Global Shutter camera (3.45 µm pixels, 1456×1088), a 6 mm lens
 
 These are produced by `golfsim/feasibility.py` and asserted in
 `tests/test_feasibility.py` across 70–183 mph. The same tool shows a 1080p60
-webcam failing on samples (2) and blur (370 px). Full table:
+webcam failing on samples (~1.5) and blur (~300 px). Full table:
 [`FEASIBILITY.md`](FEASIBILITY.md).
 
 **Strobe interval choice.** Images separate when `v × interval > ball
@@ -128,13 +129,17 @@ the full table):
 
 | metric | mean abs. error | worst club |
 |--------|----------------:|-----------:|
-| carry | 4.1 yd (~2 %) | 7.8 yd |
+| carry | 4.1 yd (~2 %) | 8.6 yd |
 | apex height | 1.1 yd | 2.4 yd |
 | descent angle | 2.1° | 4.6° |
 
-A hold‑out cross‑check during tuning (refit on half the bag, predict the other
-half) gave 4.3 yd carry MAE out‑of‑sample, so the form generalises rather than
-memorises. Driver descent (~40–42°) and apex (~95–100 ft) match tour norms.
+A hold‑out cross‑check (refit with 6 clubs held out) predicts the unseen
+clubs with 4.0 yd carry / 1.0 yd apex / 1.5° descent MAE, so the form
+generalises rather than memorises — reproduce it yourself with
+`scripts/fit_aero.py --holdout`. Driver apex
+(~100 ft) matches the tour norm; driver *descent* is the model's weakest
+point (42.4° vs the measured 38°), traded off in the fit for accuracy across
+the rest of the bag.
 
 ## 7. End‑to‑end error budget
 
